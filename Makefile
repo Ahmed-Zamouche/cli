@@ -57,7 +57,7 @@ clang_format:
 	clang-format -i example/*.c
 
 .PHONY : pre_build
-pre_build: clang_format
+pre_build:
 	mkdir -p build/lib
 
 .PHONY : post_build
