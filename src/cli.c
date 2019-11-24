@@ -37,9 +37,20 @@ static const cli_cmd_t cli_default_cmd_list[] = {
 #define CLI_CMD_LIST_TRV_SKIP (1)
 #define CLI_CMD_LIST_TRV_QUIT (2)
 
+static int cli_cmd_default_handler(cli_t *cli, int argc, char **argv) {
+  (void)cli;
+  (void)argc;
+  (void)argv;
+  return 0;
+}
+
 static int cli_cmd_list_traverser(cli_t *cli,
                                   int (*cb)(cli_t *, const cli_cmd_group_t *,
                                             const cli_cmd_t *)) {
+
+  if (cli->cmd_list == NULL || cli->cmd_list->groups == NULL) {
+    return 0;
+  }
 
   for (size_t i = 0; i < cli->cmd_list->length; i++) {
 
@@ -55,6 +66,9 @@ static int cli_cmd_list_traverser(cli_t *cli,
       ;
     }
 
+    if (group->cmds == NULL) {
+      continue;
+    }
     for (size_t j = 0; j < group->length; j++) {
 
       const cli_cmd_t *cmd = &group->cmds[j];
@@ -98,7 +112,7 @@ static int cli_cmd_help(cli_t *cli, int argc, char **argv) {
 
   (void)argv;
 
-  if (argc > 1) {
+  if (argc > 3) {
     return -1;
   }
 
@@ -138,7 +152,7 @@ static int cli_cmd_quit(cli_t *cli, int argc, char **argv) {
   (void)cli;
   (void)argv;
 
-  if (argc > 1) {
+  if (argc != 1) {
     return -1;
   }
 
@@ -161,17 +175,9 @@ static int cli_tokenize(cli_t *cli) {
 
   cli->argc = 0;
 
-  { // make line lower case
-    char *p = cli->line;
-
-    for (; *p; ++p)
-      *p = tolower(*p);
-  }
-
   while ((token = strtok_r(NULL, " \t", &saveptr))) {
 
-    // It is safe to cast to get rid of compiler warning.
-    if (cli->argc >= (int)sizeof(cli->argv)) {
+    if ((size_t)cli->argc >= ARRAY_SIZE(cli->argv)) {
       return -1;
     }
 
@@ -186,6 +192,7 @@ static size_t cli_getline(cli_t *cli) {
 
   if (cli->ptr == NULL) {
     cli->write(cli->prompt, strlen(cli->prompt));
+    cli->write(">", 1);
     cli->flush();
     cli->ptr = cli->line;
     *cli->ptr = '\0';
@@ -193,15 +200,21 @@ static size_t cli_getline(cli_t *cli) {
 
   while (!ringbuffer_is_empty(&cli->rb_inbuf)) {
     char ch;
+
     ringbuffer_get(&cli->rb_inbuf, (uint8_t *)&ch);
     switch (ch) {
-    case '\n':
     case '\r':
+    case '\n':
+      while (!ringbuffer_peek(&cli->rb_inbuf, (uint8_t *)&ch)) {
+        if (ch != '\r' && ch != '\n') {
+          break;
+        }
+        ringbuffer_get(&cli->rb_inbuf, (uint8_t *)&ch);
+      }
       cli->write("\r\n", 2);
       cli->flush();
       cli->ptr = NULL;
       return strlen(cli->line);
-      break;
     case 0x15: // CTRL-U
       while (cli->ptr != cli->line) {
         cli_echo(cli, "\b \b", 3);
@@ -210,11 +223,11 @@ static size_t cli_getline(cli_t *cli) {
       *cli->ptr = '\0';
       break;
     case '\e': // ESC
-      cli_echo(cli, "^[\r\n", 4);
-      cli->ptr = NULL;
-      return 0;
+      cli_echo(cli, "^[ \r\n", 5);
+      cli->ptr = cli->line;
+      *cli->ptr = '\0';
       break;
-    case 0x7f:
+    case 0x7f: // <-
       if (cli->ptr > cli->line) {
         *--cli->ptr = '\0';
         cli_echo(cli, "\b \b", 3);
@@ -222,7 +235,7 @@ static size_t cli_getline(cli_t *cli) {
       break;
     default:
       if (cli->ptr < (cli->line + sizeof(cli->line) - 1) && isprint(ch)) {
-        *cli->ptr++ = ch;
+        *cli->ptr++ = tolower(ch);
         *cli->ptr = '\0';
       }
       cli_echo(cli, &ch, 1);
@@ -234,10 +247,20 @@ static size_t cli_getline(cli_t *cli) {
 }
 
 int cli_putchar(cli_t *cli, int ch) {
-  if (ringbuffer_put(&cli->rb_inbuf, ch)) {
-    return -1;
+  return ringbuffer_put(&cli->rb_inbuf, ch) ? -1 : ch;
+}
+
+int cli_puts(cli_t *cli, const char *str) {
+  const char *p = str;
+
+  while (*p) {
+    if (cli_putchar(cli, *p) < 0) {
+      return -1;
+    }
+    p++;
   }
-  return ch;
+
+  return 0;
 }
 
 static int cli_cmd_run_traverser_cb(cli_t *cli, const cli_cmd_group_t *group,
@@ -251,20 +274,26 @@ static int cli_cmd_run_traverser_cb(cli_t *cli, const cli_cmd_group_t *group,
     if (strcmp(cli->argv[1], cmd->name)) {
       return CLI_CMD_LIST_TRV_SKIP;
     } else {
-      if (cmd->handler(cli, cli->argc, cli->argv) == 0) {
+
+      cli_cmd_handler_t handler =
+          cmd->handler ? cmd->handler : cli_cmd_default_handler;
+
+      if (handler(cli, cli->argc, cli->argv) == 0) {
         cli->write(CLI_MSG_CMD_OK, strlen(CLI_MSG_CMD_OK));
       } else {
         cli->write(CLI_MSG_CMD_ERROR, strlen(CLI_MSG_CMD_ERROR));
       }
+
       return CLI_CMD_LIST_TRV_QUIT;
     }
   }
   return CLI_CMD_LIST_TRV_NEXT;
 }
 
-void cli_register_cmd_quit_callback(cli_t *cli, void (*cmd_quit_cb)(void)) {
-  cli->cmd_quit_cb = cmd_quit_cb;
+void cli_register_quit_callback(cli_t *cli, void(cmd_quit_cb)(void)) {
+  cli->cmd_quit_cb = cmd_quit_cb ? cmd_quit_cb : cli_cmd_quit_default_cb;
 }
+
 void cli_mainloop(cli_t *cli) {
 
   if (!cli_getline(cli)) {
@@ -280,6 +309,7 @@ void cli_mainloop(cli_t *cli) {
     if (!strcmp(cli->argv[0], cli_default_cmd_list[i].name)) {
 
       cli_default_cmd_list[i].handler(cli, cli->argc, cli->argv);
+      return;
     }
   }
 
@@ -304,7 +334,3 @@ void cli_init(cli_t *cli, const cli_cmd_list_t *cmd_list) {
 
   cli->cmd_list = cmd_list;
 }
-
-#undef CLI_CMD_LIST_TRV_NEXT
-#undef CLI_CMD_LIST_TRV_SKIP
-#undef CLI_CMD_LIST_TRV_QUIT

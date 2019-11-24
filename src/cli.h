@@ -16,7 +16,7 @@ extern "C" {
 #include <stdint.h>
 
 #ifndef CLI_PROMPT
-#define CLI_PROMPT "ucli>"
+#define CLI_PROMPT "ucli"
 #endif /*CLI_PROMPT*/
 
 #ifndef CLI_IN_BUF_MAX
@@ -82,6 +82,8 @@ struct cli_s {
 };
 
 int cli_putchar(cli_t *cli, int ch);
+
+int cli_puts(cli_t *cli, const char *str);
 
 void cli_register_quit_callback(cli_t *cli, void (*)(void));
 
