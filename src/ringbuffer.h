@@ -29,6 +29,8 @@ int ringbuffer_put(ringbuffer_t *, uint8_t);
 
 int ringbuffer_get(ringbuffer_t *, uint8_t *);
 
+int ringbuffer_peek(ringbuffer_t *, uint8_t *);
+
 void ringbuffer_wrap(ringbuffer_t *, uint8_t *buffer, size_t capacity);
 
 #ifdef __cplusplus
