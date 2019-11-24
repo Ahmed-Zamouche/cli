@@ -66,6 +66,21 @@ int ringbuffer_get(ringbuffer_t *rb, uint8_t *pU8) {
   return res;
 }
 
+int ringbuffer_peek(ringbuffer_t *rb, uint8_t *pU8) {
+  int res = -1;
+
+  ringbuffer_lock(rb);
+
+  if (!_ringbuffer_is_empty(rb)) {
+    *pU8 = rb->buffer[rb->rd_pos];
+    res = 0;
+  }
+
+  ringbuffer_unlock(rb);
+
+  return res;
+}
+
 void ringbuffer_wrap(ringbuffer_t *rb, uint8_t *buffer, size_t capacity) {
   rb->buffer = buffer;
   rb->capacity = capacity;
