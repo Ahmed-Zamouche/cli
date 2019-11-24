@@ -11,3 +11,5 @@ jobs:
     - uses: actions/checkout@v1
     - name: make
       run: make test example
+    - name: unit test
+      run: ./build/bin/TEST_cli
