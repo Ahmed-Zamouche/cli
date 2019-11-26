@@ -214,5 +214,57 @@ int TEST_cli(int argc, char const *argv[]) {
   cli_mainloop(&cli);
   assert(cmd_handler_flag == 1);
 
+  // 3. Test limits
+  // 3.1 Test empty line
+  cmd_handler_flag = 0;
+  cli_puts(&cli, "\r\n");
+  cli_mainloop(&cli);
+  assert(cmd_handler_flag == 0);
+
+  // 3.2 Test argv max limit
+  char buf[CLI_LINE_MAX * 2] = {0};
+
+  {
+    int n = 0;
+    n += snprintf(buf + n, sizeof(buf) - n, "mcu reset");
+    for (size_t i = 0; i < 9; i++) {
+      n += snprintf(buf + n, sizeof(buf) - n, " arg%ld", i);
+    }
+    n += snprintf(buf + n, sizeof(buf) - n, "\r\n");
+  }
+
+  cmd_handler_flag = 0;
+  cli_puts(&cli, buf);
+  TEST_cmd_output_clear(&TEST_cmd_output);
+  cli_mainloop(&cli);
+  assert(cmd_handler_flag == 0);
+  assert(!strcmp(TEST_cmd_output.data + strlen(CLI_PROMPT) + 1 + strlen(buf),
+                 "Unknown command\r\n"));
+  {
+    int n = 0;
+    n += snprintf(buf + n, sizeof(buf) - n, "mcu reset");
+    for (size_t i = 0; i < CLI_ARGV_NUM; i++) {
+      n += snprintf(buf + n, sizeof(buf) - n, " arg%ld", i);
+    }
+    n += snprintf(buf + n, sizeof(buf) - n, "\r\n");
+  }
+  cli_puts(&cli, buf);
+  cli_mainloop(&cli);
+  assert(cmd_handler_flag == 1);
+
+  // 3.2 Test line max limit
+  int n = 0;
+  n += snprintf(
+      buf + n, sizeof(buf) - n,
+      "mcu reset "
+      "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\r\n");
+  cmd_handler_flag = 0;
+  cli_puts(&cli, buf);
+  cli_mainloop(&cli);
+  assert(cmd_handler_flag == 1);
+  // anything over \link CLI_LINE_MAX \endlink will be truncated
+  assert(!strcmp(cli.argv[2],
+                 "0123456789abcdef0123456789abcdef0123456789abcdef01234"));
+
   return 0;
 }
