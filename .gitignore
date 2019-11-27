@@ -1,4 +1,4 @@
 build/
 .vscode/
 *.o
-*.stackdump/
+*.stackdump

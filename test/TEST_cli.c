@@ -227,7 +227,7 @@ int TEST_cli(int argc, char const *argv[]) {
   {
     int n = 0;
     n += snprintf(buf + n, sizeof(buf) - n, "mcu reset");
-    for (size_t i = 0; i < 9; i++) {
+    for (size_t i = 0; i < (CLI_ARGV_NUM - 2) + 1; i++) {
       n += snprintf(buf + n, sizeof(buf) - n, " arg%ld", i);
     }
     n += snprintf(buf + n, sizeof(buf) - n, "\r\n");
@@ -239,11 +239,11 @@ int TEST_cli(int argc, char const *argv[]) {
   cli_mainloop(&cli);
   assert(cmd_handler_flag == 0);
   assert(!strcmp(TEST_cmd_output.data + strlen(CLI_PROMPT) + 1 + strlen(buf),
-                 "Unknown command\r\n"));
+                 "Error: The number of arguments exceeds maximum of CLI_ARGV_NUM\r\n"));
   {
     int n = 0;
     n += snprintf(buf + n, sizeof(buf) - n, "mcu reset");
-    for (size_t i = 0; i < CLI_ARGV_NUM; i++) {
+    for (size_t i = 0; i < (CLI_ARGV_NUM - 2); i++) {
       n += snprintf(buf + n, sizeof(buf) - n, " arg%ld", i);
     }
     n += snprintf(buf + n, sizeof(buf) - n, "\r\n");
@@ -259,9 +259,10 @@ int TEST_cli(int argc, char const *argv[]) {
       "mcu reset "
       "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\r\n");
   cmd_handler_flag = 0;
+  TEST_cmd_output_clear(&TEST_cmd_output);
   cli_puts(&cli, buf);
   cli_mainloop(&cli);
-  assert(cmd_handler_flag == 1);
+  assert(cmd_handler_flag == 0);
   // anything over \link CLI_LINE_MAX \endlink will be truncated
   assert(!strcmp(cli.argv[2],
                  "0123456789abcdef0123456789abcdef0123456789abcdef01234"));
