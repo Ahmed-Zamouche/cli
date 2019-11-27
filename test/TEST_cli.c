@@ -238,8 +238,9 @@ int TEST_cli(int argc, char const *argv[]) {
   TEST_cmd_output_clear(&TEST_cmd_output);
   cli_mainloop(&cli);
   assert(cmd_handler_flag == 0);
-  assert(!strcmp(TEST_cmd_output.data + strlen(CLI_PROMPT) + 1 + strlen(buf),
-                 "Error: The number of arguments exceeds maximum of CLI_ARGV_NUM\r\n"));
+  assert(!strcmp(
+      TEST_cmd_output.data + strlen(CLI_PROMPT) + 1 + strlen(buf),
+      "Error: The number of arguments exceeds maximum of CLI_ARGV_NUM\r\n"));
   {
     int n = 0;
     n += snprintf(buf + n, sizeof(buf) - n, "mcu reset");

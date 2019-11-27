@@ -5,8 +5,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-static const char *const cli_default_prompt = CLI_PROMPT;
+#define CLI_CMD_LIST_TRV_NEXT (0)
+#define CLI_CMD_LIST_TRV_SKIP (1)
+#define CLI_CMD_LIST_TRV_END (2)
 
+static int cli_cmd_echo(cli_t *cli, int argc, char **argv);
+static int cli_cmd_help(cli_t *cli, int argc, char **argv);
+static int cli_cmd_quit(cli_t *cli, int argc, char **argv);
+
+static const char *const cli_default_prompt = CLI_PROMPT;
 static const char *const CLI_MSG_CMD_OK = "Ok\r\n";
 static const char *const CLI_MSG_CMD_ERROR = "Error\r\n";
 static const char *const CLI_MSG_NUM_ARG_ERR =
@@ -15,18 +22,36 @@ static const char *const CLI_MSG_LINE_LENGTH_ERR =
     "Error: The line length exceeds maximum of CLI_LINE_MAX\r\n";
 static const char *const CLI_MSG_CMD_UNKNOWN = "Unknown command\r\n";
 
+/**
+ * @brief default command line interpreter write function
+ *
+ * @param ptr pinter to the buffer to be written
+ * @param size number of bytes to write
+ * @return size_t On success, return the number of items read or written.
+ * Otherwise, less than size or 0 is returned
+ */
 static size_t cli_default_write(const void *ptr, size_t size) {
   return fwrite(ptr, size, 1, stdout);
 }
 
+/**
+ * @brief default quit callback function if none is registred
+ *
+ * @return int  Upon successful completion 0 is returned.  Otherwise, -1 is
+ * returned
+ */
 static int cli_default_flush(void) { return fflush(stdout); }
 
+/**
+ * @brief default quit callback function if none is registred
+ *
+ */
 static void cli_cmd_quit_default_cb(void) { exit(0); }
 
-static int cli_cmd_echo(cli_t *cli, int argc, char **argv);
-static int cli_cmd_help(cli_t *cli, int argc, char **argv);
-static int cli_cmd_quit(cli_t *cli, int argc, char **argv);
-
+/**
+ * @brief build-in default command list
+ *
+ */
 static const cli_cmd_t cli_default_cmd_list[] = {
     {.name = "help", .desc = "Print this help", .handler = cli_cmd_help},
     {.name = "echo",
@@ -37,10 +62,14 @@ static const cli_cmd_t cli_default_cmd_list[] = {
      .handler = cli_cmd_quit},
 };
 
-#define CLI_CMD_LIST_TRV_NEXT (0)
-#define CLI_CMD_LIST_TRV_SKIP (1)
-#define CLI_CMD_LIST_TRV_QUIT (2)
-
+/**
+ * @brief default command handler if none is attached
+ *
+ * @param cli the command line interpreter struct
+ * @param argc arguments count
+ * @param argv arguments vector
+ * @return int On success 0 is return. Otherwise non zero value
+ */
 static int cli_cmd_default_handler(cli_t *cli, int argc, char **argv) {
   (void)cli;
   (void)argc;
@@ -48,6 +77,19 @@ static int cli_cmd_default_handler(cli_t *cli, int argc, char **argv) {
   return 0;
 }
 
+/**
+ * @brief Traverse the commands list and callback the caller for every group and
+ * command using cb. cb function takes 3 parameters: Pointer to the command
+ * line interpreter struct, pointer to command group struct and pointer to the
+ * command struct. for every new group found the command struct argument is set
+ * to NULL. cb return \link CLI_CMD_LIST_TRV_NEXT \endlink to indicated to
+ * traverser to continue traversing,  \link CLI_CMD_LIST_TRV_SKIP \endlink to
+ * skip the current group \link CLI_CMD_LIST_TRV_END \endlink to end traversing.
+ * @param cli the command line interpreter struct
+ * @param cb callback function
+ * @return int 0 if the whole list was traversed, 1 if the traversing ended at a
+ * group or 2  if the traversing ended at a command
+ */
 static int cli_cmd_list_traverser(cli_t *cli,
                                   int (*cb)(cli_t *, const cli_cmd_group_t *,
                                             const cli_cmd_t *)) {
@@ -64,7 +106,7 @@ static int cli_cmd_list_traverser(cli_t *cli,
 
     if (ret == CLI_CMD_LIST_TRV_SKIP) {
       continue;
-    } else if (ret == CLI_CMD_LIST_TRV_QUIT) {
+    } else if (ret == CLI_CMD_LIST_TRV_END) {
       return 1;
     } else {
       ;
@@ -80,7 +122,7 @@ static int cli_cmd_list_traverser(cli_t *cli,
       int ret = cb(cli, group, cmd);
       if (ret == CLI_CMD_LIST_TRV_SKIP) {
         continue;
-      } else if (ret == CLI_CMD_LIST_TRV_QUIT) {
+      } else if (ret == CLI_CMD_LIST_TRV_END) {
         return 2;
       } else {
         ;
@@ -112,6 +154,14 @@ static int cli_cmd_help_traverser_cb(cli_t *cli, const cli_cmd_group_t *group,
   return CLI_CMD_LIST_TRV_NEXT;
 }
 
+/**
+ * @brief build-in help command handler
+ *
+ * @param cli the command line interpreter struct
+ * @param argc arguments count
+ * @param argv arguments vector
+ * @return int On success 0 is return. Otherwise non zero value
+ */
 static int cli_cmd_help(cli_t *cli, int argc, char **argv) {
 
   (void)argv;
@@ -134,6 +184,14 @@ static int cli_cmd_help(cli_t *cli, int argc, char **argv) {
   return 0;
 }
 
+/**
+ * @brief build-in echo command handler
+ *
+ * @param cli the command line interpreter struct
+ * @param argc arguments count
+ * @param argv arguments vector
+ * @return int On success 0 is return. Otherwise non zero value
+ */
 static int cli_cmd_echo(cli_t *cli, int argc, char **argv) {
 
   if (argc != 2) {
@@ -151,6 +209,14 @@ static int cli_cmd_echo(cli_t *cli, int argc, char **argv) {
   return 0;
 }
 
+/**
+ * @brief build-in quit command handler
+ *
+ * @param cli the command line interpreter struct
+ * @param argc arguments count
+ * @param argv arguments vector
+ * @return int On success 0 is return. Otherwise non zero value
+ */
 static int cli_cmd_quit(cli_t *cli, int argc, char **argv) {
 
   (void)cli;
@@ -165,6 +231,14 @@ static int cli_cmd_quit(cli_t *cli, int argc, char **argv) {
   return 0;
 }
 
+/**
+ * @brief write buffer pointed to by ptr of size size to the command line
+ * interpreter write to output function. If the echoing is not enable nothing is
+ * written
+ * @param cli the command line interpreter struct
+ * @param ptr pointer to buffer to be written
+ * @param size number of byte to be written
+ */
 static void cli_echo(cli_t *cli, const void *ptr, size_t size) {
   if (cli->echo) {
     cli->write(ptr, size);
@@ -172,6 +246,14 @@ static void cli_echo(cli_t *cli, const void *ptr, size_t size) {
   }
 }
 
+/**
+ * @brief tokenise the command line interpreter line using space and tab as
+ * token delimiter
+ *
+ * @param cli the command line interpreter struct
+ * @return int number of tokens found. -1 if number of token exceeded  \link
+ * CLI_ARGV_NUM \endlink
+ */
 static int cli_tokenize(cli_t *cli) {
 
   char *token;
@@ -190,6 +272,14 @@ static int cli_tokenize(cli_t *cli) {
   return cli->argc;
 }
 
+/**
+ * @brief read bytes from the receive buffer and add them to the line buffer.
+ * Only printing character are added, If newline delimiter is found the the
+ * function return the strlen of line
+ * @param cli the command line interpreter struct
+ * @return size_t strlen of the line. 0 if the receive buffer was emptied before
+ * detecting a new line
+ */
 static size_t cli_getline(cli_t *cli) {
 
   if (cli->ptr == NULL) {
@@ -292,7 +382,7 @@ static int cli_cmd_run_traverser_cb(cli_t *cli, const cli_cmd_group_t *group,
         cli->write(CLI_MSG_CMD_ERROR, strlen(CLI_MSG_CMD_ERROR));
       }
 
-      return CLI_CMD_LIST_TRV_QUIT;
+      return CLI_CMD_LIST_TRV_END;
     }
   }
   return CLI_CMD_LIST_TRV_NEXT;

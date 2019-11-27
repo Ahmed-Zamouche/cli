@@ -5,10 +5,6 @@
 extern "C" {
 #endif
 
-#ifndef CLI_INPUT_BUF_SIZE
-#define CLI_INPUT_BUF_SIZE (64)
-#endif
-
 #include "ringbuffer.h"
 
 #include <stdbool.h>
@@ -16,79 +12,145 @@ extern "C" {
 #include <stdint.h>
 
 #ifndef CLI_PROMPT
-#define CLI_PROMPT "ucli"
-#endif /*CLI_PROMPT*/
+#define CLI_PROMPT "ucli" /**< Command prompot default string*/
+#endif
 
 #ifndef CLI_IN_BUF_MAX
-#define CLI_IN_BUF_MAX (128)
-#endif /*CLI_IN_BUF_MAX*/
+#define CLI_IN_BUF_MAX (128) /**< Input receive buffer max length*/
+#endif
 
 #ifndef CLI_LINE_MAX
-#define CLI_LINE_MAX (64)
-#endif /*CLI_LINE_MAX*/
+#define CLI_LINE_MAX (64) /**< Command line max length*/
+#endif
 
 #ifndef CLI_ARGV_NUM
-#define CLI_ARGV_NUM (8)
-#endif /*CLI_ARGV_NUM*/
+#define CLI_ARGV_NUM (8) /**< Command arguments max  length*/
+#endif
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
-#endif /*ARRAY_SIZE*/
+#endif
 
+/**
+ * @brief
+ * Definition of the command interpreter struct
+ */
 typedef struct cli_s cli_t;
 
+/**
+ * @brief Command handler prototype function type
+ *
+ */
 typedef int (*cli_cmd_handler_t)(cli_t *cli, int argc, char **argv);
 
+/**
+ * @brief Definition of the command struct
+ *
+ */
 typedef struct cli_cmd_s {
-  char *name;
-  char *desc;
-  cli_cmd_handler_t handler;
+  char *name; /**< command name */
+  char *desc; /**< command description */
+  cli_cmd_handler_t
+      handler; /**< command handler see \link cli_cmd_handler_t\endlink  */
 } cli_cmd_t;
 
+/**
+ * @brief Definition of the command group struct
+ *
+ */
 typedef struct cli_cmd_group_s {
-  char *name;
-  char *desc;
-  const cli_cmd_t *cmds;
-  size_t length;
+  char *name;            /**< Group name*/
+  char *desc;            /**< Group  description*/
+  const cli_cmd_t *cmds; /**< Group commands list see \link cli_cmd_t\endlink*/
+  size_t length;         /**< Group commands length */
 } cli_cmd_group_t;
 
+/**
+ * @brief Definition of the commands list struct
+ *
+ */
 typedef struct cli_cmd_list_s {
-  const cli_cmd_group_t *groups;
-  size_t length;
+  const cli_cmd_group_t
+      *groups;   /**< Groups list see \link cli_cmd_group_t\endlink*/
+  size_t length; /**< Groups length */
 } cli_cmd_list_t;
 
+/**
+ * @brief Definition of command interpreter struct
+ *
+ */
 struct cli_s {
-  bool echo;
+  bool echo; /**< Turn On/Off echoing */
 
-  char *ptr;
+  char *ptr; /**<  internal pointer*/
 
-  char inbuf[CLI_IN_BUF_MAX];
-  char line[CLI_LINE_MAX];
+  char inbuf[CLI_IN_BUF_MAX]; /**<  buffer used for received bytes*/
+  char line[CLI_LINE_MAX];    /**<  buffer used for line*/
 
-  int argc;
-  char *argv[CLI_ARGV_NUM];
+  int argc;                 /**<  number of arguments */
+  char *argv[CLI_ARGV_NUM]; /**<  arguments vector*/
 
-  ringbuffer_t rb_inbuf;
+  ringbuffer_t rb_inbuf; /**< ring buffer used received bytes see \link
+                            ringbuffer_t \endlink*/
 
-  size_t (*write)(const void *ptr, size_t size);
+  size_t (*write)(const void *ptr,
+                  size_t size); /**<  write to output function*/
 
-  int (*flush)(void);
+  int (*flush)(void); /**<  flush output function */
 
-  void (*cmd_quit_cb)(void);
+  void (*cmd_quit_cb)(void); /**<  calback function called by quit*/
 
-  char const *prompt;
+  char const *prompt; /**<  command line prompt*/
 
-  const cli_cmd_list_t *cmd_list;
+  const cli_cmd_list_t
+      *cmd_list; /**<  commands list see \link cli_cmd_list_t \endlink*/
 };
 
+/**
+ * @brief puts ch into the internal receive  buffer
+ *
+ * @param cli the command line interpreter struct
+ * @param ch the char to put
+ * @return int Upon successful completion ch is returned.  Otherwise, -1 is
+ * returned
+ */
 int cli_putchar(cli_t *cli, int ch);
 
+/**
+ * @brief puts string str into the receive buffer. str MUST be NULL terminated
+ *
+ * @param cli the command line interpreter struct
+ * @param str the NULL terminate string to put
+ * @return Upon successful completion 0 is returned.  Otherwise, -1 is
+ * returned
+ */
 int cli_puts(cli_t *cli, const char *str);
 
-void cli_register_quit_callback(cli_t *cli, void (*)(void));
+/**
+ * @brief Used to register a qui callack. when the build-in quit command is
+ * received The user may decided to stop calling \link cli_mainloop \endlink
+ * @param cli the command line interpreter struct
+ * @param quit_cb callback function. NULL value for unregistering previously
+ * registered function.
+ */
+void cli_register_quit_callback(cli_t *cli, void (*quit_cb)(void));
 
+/**
+ * @brief cli main loop when called it will process received bytes. when a line
+ * is received with a valid command a handler of the command is invoked.
+ * Typically is should be called on regular intervals
+ * @param cli the command line interpreter struct
+ */
 void cli_mainloop(cli_t *cli);
 
+/**
+ * @brief initialise command line interpreter struct and add the command list
+ * struct.
+ *
+ * @param cli the command line interpreter struct
+ * @param cmd_list the command list struct. If NULL only build-in
+ * commands are available
+ */
 void cli_init(cli_t *cli, const cli_cmd_list_t *cmd_list);
 
 #ifdef __cplusplus
