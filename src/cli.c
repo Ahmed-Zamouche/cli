@@ -7,9 +7,13 @@
 
 static const char *const cli_default_prompt = CLI_PROMPT;
 
-static const char *const CLI_MSG_CMD_OK = "ok\r\n";
-static const char *const CLI_MSG_CMD_ERROR = "error\r\n";
-static const char *const CLI_MSG_CMD_UNKNOWN = "unknown cmd\r\n";
+static const char *const CLI_MSG_CMD_OK = "Ok\r\n";
+static const char *const CLI_MSG_CMD_ERROR = "Error\r\n";
+static const char *const CLI_MSG_NUM_ARG_ERR =
+    "Error: The number of arguments exceeds maximum of CLI_ARGV_NUM\r\n";
+static const char *const CLI_MSG_LINE_LENGTH_ERR =
+    "Error: The line length exceeds maximum of CLI_LINE_MAX\r\n";
+static const char *const CLI_MSG_CMD_UNKNOWN = "Unknown command\r\n";
 
 static size_t cli_default_write(const void *ptr, size_t size) {
   return fwrite(ptr, size, 1, stdout);
@@ -183,8 +187,6 @@ static int cli_tokenize(cli_t *cli) {
 
     cli->argv[cli->argc++] = token;
   }
-  cli->argv[cli->argc] = NULL;
-
   return cli->argc;
 }
 
@@ -198,10 +200,9 @@ static size_t cli_getline(cli_t *cli) {
     *cli->ptr = '\0';
   }
 
-  while (!ringbuffer_is_empty(&cli->rb_inbuf)) {
-    char ch;
+  char ch;
+  while (!ringbuffer_get(&cli->rb_inbuf, (uint8_t *)&ch)) {
 
-    ringbuffer_get(&cli->rb_inbuf, (uint8_t *)&ch);
     switch (ch) {
     case '\r':
     case '\n':
@@ -234,9 +235,16 @@ static size_t cli_getline(cli_t *cli) {
       }
       break;
     default:
-      if (cli->ptr < (cli->line + sizeof(cli->line) - 1) && isprint(ch)) {
-        *cli->ptr++ = tolower(ch);
-        *cli->ptr = '\0';
+      if (isprint(ch)) {
+        if (cli->ptr < (cli->line + sizeof(cli->line) - 1)) {
+          *cli->ptr++ = tolower(ch);
+          *cli->ptr = '\0';
+        } else {
+          cli->write("\r\n", 2);
+          cli->write(CLI_MSG_LINE_LENGTH_ERR, strlen(CLI_MSG_LINE_LENGTH_ERR));
+          cli->ptr = NULL;
+          return 0;
+        }
       }
       cli_echo(cli, &ch, 1);
       break;
@@ -296,11 +304,16 @@ void cli_register_quit_callback(cli_t *cli, void(cmd_quit_cb)(void)) {
 
 void cli_mainloop(cli_t *cli) {
 
-  if (!cli_getline(cli)) {
+  if (cli_getline(cli) == 0) {
     return;
   }
 
-  if (!cli_tokenize(cli)) {
+  if (cli_tokenize(cli) < 0) {
+    cli->write(CLI_MSG_NUM_ARG_ERR, strlen(CLI_MSG_NUM_ARG_ERR));
+    return;
+  }
+
+  if (cli->argc == 0) {
     return;
   }
 
