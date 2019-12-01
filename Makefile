@@ -53,8 +53,8 @@ build: pre_build $(PROJECT).a post_build
 .PHONY : clang_format
 clang_format:
 	clang-format -i src/*.c src/*.h
-	clang-format -i test/*.c
-	clang-format -i example/*.c
+	clang-format -i test/*.c test/*.h
+	clang-format -i example/*.c example/*.h
 
 .PHONY : pre_build
 pre_build:
