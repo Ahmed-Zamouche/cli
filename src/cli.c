@@ -419,7 +419,7 @@ static int cli_cmd_run_traverser_cb(cli_t *cli, const cli_cmd_group_t *group,
   return CLI_CMD_LIST_TRV_NEXT;
 }
 
-void cli_register_quit_callback(cli_t *cli, void(*cmd_quit_cb)(void)) {
+void cli_register_quit_callback(cli_t *cli, void (*cmd_quit_cb)(void)) {
   cli->cmd_quit_cb = cmd_quit_cb ? cmd_quit_cb : cli_cmd_quit_default_cb;
 }
 

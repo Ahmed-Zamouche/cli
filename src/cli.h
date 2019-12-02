@@ -111,28 +111,19 @@ typedef struct cli_cmd_list_s {
  *
  */
 struct cli_s {
-  bool echo; /**< Turn On/Off echoing */
-
-  char *ptr; /**<  internal pointer*/
-
+  bool echo;                  /**< Turn On/Off echoing */
+  char *ptr;                  /**<  internal pointer*/
   char inbuf[CLI_IN_BUF_MAX]; /**<  buffer used for received bytes*/
   char line[CLI_LINE_MAX];    /**<  buffer used for line*/
-
-  int argc;                 /**<  number of arguments */
-  char *argv[CLI_ARGV_NUM]; /**<  arguments vector*/
-
-  ringbuffer_t rb_inbuf; /**< ring buffer used received bytes see \link
-                            ringbuffer_t \endlink*/
-
+  int argc;                   /**<  number of arguments */
+  char *argv[CLI_ARGV_NUM];   /**<  arguments vector*/
+  ringbuffer_t rb_inbuf;      /**< ring buffer used received bytes see \link
+                                 ringbuffer_t \endlink*/
   size_t (*write)(const void *ptr,
                   size_t size); /**<  write to output function*/
-
-  int (*flush)(void); /**<  flush output function */
-
-  void (*cmd_quit_cb)(void); /**<  calback function called by quit*/
-
-  char const *prompt; /**<  command line prompt*/
-
+  int (*flush)(void);           /**<  flush output function */
+  void (*cmd_quit_cb)(void);    /**<  calback function called by quit*/
+  char const *prompt;           /**<  command line prompt*/
   const cli_cmd_list_t
       *cmd_list; /**<  commands list see \link cli_cmd_list_t \endlink*/
 };
