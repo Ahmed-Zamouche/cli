@@ -349,7 +349,8 @@ static size_t cli_getline(cli_t *cli) {
       cli->ptr = cli->line;
       *cli->ptr = '\0';
       break;
-    case 0x7f: // <-
+    case '\b': // <-
+    case 0x7f:
       if (cli->ptr > cli->line) {
         *--cli->ptr = '\0';
         cli_echo(cli, "\b \b", 3);
