@@ -123,14 +123,18 @@ int TEST_cli(int argc, char const *argv[]) {
   cli_mainloop(&cli);
   assert(TEST_cmd_handler_flag == 0);
 
+  cli_cmd_group_t cli_cmd_mcu_group = {0};
+  cli_cmd_group_t cli_cmd_gpio_group = {0};
+  cli_cmd_group_t cli_cmd_adc_group = {0};
   // 2.2 Attach the first group
-  cli_cmd_group_t cli_cmd_group[ARRAY_SIZE(TEST_cli_cmd_group)] = {0};
-  cmd_list->groups = cli_cmd_group;
+  cli_cmd_group_t *cli_cmd_group[ARRAY_SIZE(TEST_cli_cmd_group)] = {
+      &cli_cmd_mcu_group, &cli_cmd_gpio_group, &cli_cmd_adc_group};
+  cmd_list->groups = (const cli_cmd_group_t **)cli_cmd_group;
   cmd_list->length = 1;
 
   // name and description can not be null
-  cli_cmd_group->name = TEST_cli_cmd_group->name;
-  cli_cmd_group->desc = TEST_cli_cmd_group->desc;
+  cli_cmd_group[0]->name = TEST_cli_cmd_group[0]->name;
+  cli_cmd_group[0]->desc = TEST_cli_cmd_group[0]->desc;
 
   // 2.1.1 Test null cmds;
   cli_puts(&cli, "mcu reset\r\n");
@@ -139,8 +143,8 @@ int TEST_cli(int argc, char const *argv[]) {
 
   // 2.1.1 Attach the first cmd;
   cli_cmd_t cli_cmd_mcu_list[ARRAY_SIZE(TEST_cli_cmd_mcu_list)] = {0};
-  cli_cmd_group->cmds = cli_cmd_mcu_list;
-  cli_cmd_group->length = 1;
+  cli_cmd_group[0]->cmds = cli_cmd_mcu_list;
+  cli_cmd_group[0]->length = 1;
 
   // name and description can not be null
   cli_cmd_mcu_list->name = TEST_cli_cmd_mcu_list->name;

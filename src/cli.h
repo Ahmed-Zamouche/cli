@@ -101,7 +101,7 @@ typedef struct cli_cmd_group_s {
  *
  */
 typedef struct cli_cmd_list_s {
-  const cli_cmd_group_t
+  const cli_cmd_group_t *
       *groups;   /**< Groups list see \link cli_cmd_group_t\endlink*/
   size_t length; /**< Groups length */
 } cli_cmd_list_t;

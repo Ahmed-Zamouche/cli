@@ -131,7 +131,7 @@ static int cli_cmd_list_traverser(cli_t *cli,
 
   for (size_t i = 0; i < cli->cmd_list->length; i++) {
 
-    const cli_cmd_group_t *group = &cli->cmd_list->groups[i];
+    const cli_cmd_group_t *group = cli->cmd_list->groups[i];
 
     int ret = cb(cli, group, NULL);
 

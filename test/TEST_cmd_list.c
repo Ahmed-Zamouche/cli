@@ -52,6 +52,9 @@ const cli_cmd_t TEST_cli_cmd_mcu_list[] = {
 
 };
 
+const cli_cmd_group_t TEST_cli_cmd_mcu_group = {
+    .name = "mcu", .desc = "MCU group", .cmds = NULL, .length = 0};
+
 const cli_cmd_t TEST_cli_cmd_gpio_list[] = {
     {
         .name = "input-get",
@@ -70,6 +73,9 @@ const cli_cmd_t TEST_cli_cmd_gpio_list[] = {
     },
 };
 
+const cli_cmd_group_t TEST_cli_cmd_gpio_group = {
+    .name = "gpio", .desc = "Gpio group", .cmds = NULL, .length = 0};
+
 const cli_cmd_t TEST_cli_cmd_adc_list[] = {
     {
         .name = "get",
@@ -83,10 +89,13 @@ const cli_cmd_t TEST_cli_cmd_adc_list[] = {
     },
 };
 
-const cli_cmd_group_t TEST_cli_cmd_group[] = {
-    {.name = "mcu", .desc = "MCU group", .cmds = NULL, .length = 0},
-    {.name = "gpio", .desc = "Gpio group", .cmds = NULL, .length = 0},
-    {.name = "adc", .desc = "ADC group", .cmds = NULL, .length = 0},
+const cli_cmd_group_t TEST_cli_cmd_adc_group = {
+    .name = "adc", .desc = "ADC group", .cmds = NULL, .length = 0};
+
+const cli_cmd_group_t *TEST_cli_cmd_group[] = {
+    &TEST_cli_cmd_mcu_group,
+    &TEST_cli_cmd_gpio_group,
+    &TEST_cli_cmd_adc_group,
 };
 
 cli_cmd_list_t TEST_cli_cmd_list = {
