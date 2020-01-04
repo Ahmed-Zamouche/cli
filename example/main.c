@@ -76,6 +76,7 @@ int main(int argc, char **argv) {
 
   cli_init(&cli, &cli_cmd_list);
 
+  cli_print_prompt(&cli);
   while (1) {
 
     cli_mainloop(&cli);

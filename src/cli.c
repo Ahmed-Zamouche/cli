@@ -303,6 +303,12 @@ static int cli_tokenize(cli_t *cli) {
   return cli->argc;
 }
 
+void cli_print_prompt(cli_t *cli) {
+  cli->write(cli->prompt, strlen(cli->prompt));
+  cli->write(">", 1);
+  cli->flush();
+}
+
 /**
  * @brief read bytes from the receive buffer and add them to the line buffer.
  * Only printing character are added, If newline delimiter is found the the
@@ -314,9 +320,6 @@ static int cli_tokenize(cli_t *cli) {
 static size_t cli_getline(cli_t *cli) {
 
   if (cli->ptr == NULL) {
-    cli->write(cli->prompt, strlen(cli->prompt));
-    cli->write(">", 1);
-    cli->flush();
     cli->ptr = cli->line;
     *cli->ptr = '\0';
   }
@@ -336,7 +339,11 @@ static size_t cli_getline(cli_t *cli) {
       cli->write("\r\n", 2);
       cli->flush();
       cli->ptr = NULL;
-      return strlen(cli->line);
+      size_t len = strlen(cli->line);
+      if (len == 0) {
+        cli_print_prompt(cli);
+      }
+      return len;
     case 0x15: // CTRL-U
       while (cli->ptr != cli->line) {
         cli_echo(cli, "\b \b", 3);
@@ -365,6 +372,7 @@ static size_t cli_getline(cli_t *cli) {
           cli->write("\r\n", 2);
           cli->write(CLI_MSG_LINE_LENGTH_ERR, strlen(CLI_MSG_LINE_LENGTH_ERR));
           cli->ptr = NULL;
+          cli_print_prompt(cli);
           return 0;
         }
       }
@@ -432,26 +440,30 @@ void cli_mainloop(cli_t *cli) {
 
   if (cli_tokenize(cli) < 0) {
     cli->write(CLI_MSG_NUM_ARG_ERR, strlen(CLI_MSG_NUM_ARG_ERR));
-    return;
+    goto cli_mainloop_exit;
   }
 
   if (cli->argc == 0) {
-    return;
+    goto cli_mainloop_exit;
   }
 
   for (size_t i = 0; i < ARRAY_SIZE(cli_default_cmd_list); i++) {
 
     if (!strcmp(cli->argv[0], cli_default_cmd_list[i].name)) {
-
-      cli_default_cmd_list[i].handler(cli, cli->argc, cli->argv);
-      return;
+      if (cli_default_cmd_list[i].handler(cli, cli->argc, cli->argv) == 0) {
+        cli->write(CLI_MSG_CMD_OK, strlen(CLI_MSG_CMD_OK));
+      } else {
+        cli->write(CLI_MSG_CMD_ERROR, strlen(CLI_MSG_CMD_ERROR));
+      }
+      goto cli_mainloop_exit;
     }
   }
 
   if (cli->argc < 2 || !cli_cmd_list_traverser(cli, cli_cmd_run_traverser_cb)) {
     cli->write(CLI_MSG_CMD_UNKNOWN, strlen(CLI_MSG_CMD_UNKNOWN));
   }
-  return;
+cli_mainloop_exit:
+  cli_print_prompt(cli);
 }
 
 void cli_init(cli_t *cli, const cli_cmd_list_t *cmd_list) {

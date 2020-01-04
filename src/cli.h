@@ -129,6 +129,12 @@ struct cli_s {
 };
 
 /**
+ * @brief print cli prompt
+ * @param cli the command line interpreter struct
+ */
+void cli_print_prompt(cli_t *cli);
+
+/**
  * @brief puts ch into the internal receive  buffer
  *
  * @param cli the command line interpreter struct

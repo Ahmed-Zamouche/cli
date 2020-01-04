@@ -99,19 +99,18 @@ int TEST_cli(int argc, char const *argv[]) {
   TEST_cmd_output_clear(&TEST_cmd_output);
   cli_puts(&cli, "echo off\r\n");
   cli_mainloop(&cli);
-  assert(!strcmp(TEST_cmd_output.data, CLI_PROMPT ">echo off\r\n"));
+  assert(!strcmp(TEST_cmd_output.data, "echo off\r\nOk\r\n" CLI_PROMPT ">"));
 
   TEST_cmd_output_clear(&TEST_cmd_output);
   cli_puts(&cli, "echo on\r\n");
   cli_mainloop(&cli);
-  assert(!strcmp(TEST_cmd_output.data, CLI_PROMPT ">\r\n"));
+  assert(!strcmp(TEST_cmd_output.data, "\r\nOk\r\n" CLI_PROMPT ">"));
 
   // 1.3 Test build-in help command
   TEST_cmd_output_clear(&TEST_cmd_output);
   cli_puts(&cli, "help\r\n");
   cli_mainloop(&cli);
-  assert(!memcmp(TEST_cmd_output.data, CLI_PROMPT ">help\r\nhelp\t",
-                 strlen(CLI_PROMPT) + 12));
+  assert(!memcmp(TEST_cmd_output.data, "help\r\nhelp\t", 11));
 
   // 2. TEST user defined commands
   cli_cmd_list_t *cmd_list = &TEST_cli_cmd_list;
@@ -187,9 +186,9 @@ int TEST_cli(int argc, char const *argv[]) {
   TEST_cmd_output_clear(&TEST_cmd_output);
   cli_mainloop(&cli);
   assert(TEST_cmd_handler_flag == 0);
-  assert(!strcmp(
-      TEST_cmd_output.data + strlen(CLI_PROMPT) + 1 + strlen(buf),
-      "Error: The number of arguments exceeds maximum of CLI_ARGV_NUM\r\n"));
+  assert(!strcmp(TEST_cmd_output.data + strlen(buf),
+                 "Error: The number of arguments exceeds maximum of "
+                 "CLI_ARGV_NUM\r\n" CLI_PROMPT ">"));
   {
     int n = 0;
     n += snprintf(buf + n, sizeof(buf) - n, "mcu reset");
