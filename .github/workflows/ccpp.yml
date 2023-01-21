@@ -9,7 +9,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-    - name: make
+    - name: build
       run: bazel build //lib:test_cmd_list  --test_output=all  -c dbg
-    - name: unit test
+    - name: unittest
       run: ./bazel-bin/lib/test_cmd_list
