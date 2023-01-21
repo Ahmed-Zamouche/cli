@@ -29,7 +29,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "cli.h"
+#include "lib/cli.h"
 #include "cmd_list.h"
 
 #include "uart.h"

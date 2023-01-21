@@ -1,5 +1,5 @@
 /**
- * @file TEST_cmd_list.h
+ * @file test_cmd_list.h
  * @author Ahmed Zamouche (ahmed.zamouche@gmail.com)
  * @brief
  * @version 0.1
@@ -36,7 +36,7 @@
 extern "C" {
 #endif
 
-#include "cli.h"
+#include "lib/cli.h"
 
 extern volatile int TEST_cmd_handler_flag;
 

@@ -36,7 +36,7 @@
 extern "C" {
 #endif
 
-#include "cli.h"
+#include "lib/cli.h"
 
 extern const cli_cmd_list_t cli_cmd_list;
 

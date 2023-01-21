@@ -79,8 +79,8 @@ typedef int (*cli_cmd_handler_t)(cli_t *cli, int argc, char **argv);
  *
  */
 typedef struct cli_cmd_s {
-  char *name; /**< command name */
-  char *desc; /**< command description */
+  const char *name; /**< command name */
+  const char *desc; /**< command description */
   cli_cmd_handler_t
       handler; /**< command handler see \link cli_cmd_handler_t\endlink  */
 } cli_cmd_t;
@@ -90,8 +90,8 @@ typedef struct cli_cmd_s {
  *
  */
 typedef struct cli_cmd_group_s {
-  char *name;            /**< Group name*/
-  char *desc;            /**< Group  description*/
+  const char *name;            /**< Group name*/
+  const char *desc;            /**< Group  description*/
   const cli_cmd_t *cmds; /**< Group commands list see \link cli_cmd_t\endlink*/
   size_t length;         /**< Group commands length */
 } cli_cmd_group_t;
