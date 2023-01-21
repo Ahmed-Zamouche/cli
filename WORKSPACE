@@ -3,8 +3,8 @@ workspace(name = "cli")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 http_archive(
   name = "gtest",
-  #urls = ["https://github.com/google/googletest/archive/refs/tags/release-1.12.1.tar.gz"],
-  urls = ["http://127.0.0.1:8080/google/googletest/archive/refs/tags/googletest-release-1.12.1.tar.gz"],
+  urls = ["https://github.com/google/googletest/archive/refs/tags/release-1.12.1.tar.gz"],
+  #urls = ["http://127.0.0.1:8080/google/googletest/archive/refs/tags/googletest-release-1.12.1.tar.gz"],
   strip_prefix = "googletest-release-1.12.1",
   sha256 = "81964fe578e9bd7c94dfdb09c8e4d6e6759e19967e397dbea48d1c10e45d0df2",
   build_file = "@//third-party/gtest:BUILD",
