@@ -10,6 +10,6 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: build
-      run: bazel build //lib:test_cmd_list  --test_output=all  -c dbg
-    - name: unittest
-      run: ./bazel-bin/lib/test_cmd_list
+      run: bazel build //...
+    - name: test
+      run:  bazel test //...
