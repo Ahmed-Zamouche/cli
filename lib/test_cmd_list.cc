@@ -144,12 +144,12 @@ TEST_F(TestCli, TestBiildinQuitCmd) {
 TEST_F(TestCli, TestBuildinEchoCmd) {
   cli_puts(&_cli, "echo off\r\n");
   cli_mainloop(&_cli);
-  EXPECT_STREQ(_output_buffer.data, "echo off\r\nOk\r\n" CLI_PROMPT ">");
+  EXPECT_STREQ(_output_buffer.data, "echo off\r\nOk\r\n" CLI_PROMPT "> ");
 
   clear_output_buffer(_output_buffer);
   cli_puts(&_cli, "echo on\r\n");
   cli_mainloop(&_cli);
-  EXPECT_STREQ(_output_buffer.data, "\r\nOk\r\n" CLI_PROMPT ">");
+  EXPECT_STREQ(_output_buffer.data, "\r\nOk\r\n" CLI_PROMPT "> ");
 }
 
 TEST_F(TestCli, TestBuildinHelpCmd) {
@@ -287,7 +287,7 @@ TEST_F(TestCli, TestLimits) {
     EXPECT_EQ(_handler_flag, 0);
     EXPECT_EQ(strcmp(_output_buffer.data + strlen(buf),
                      "Error: The number of arguments exceeds maximum of "
-                     "CLI_ARGV_NUM\r\n" CLI_PROMPT ">"),
+                     "CLI_ARGV_NUM\r\n" CLI_PROMPT "> "),
               0);
   }
 

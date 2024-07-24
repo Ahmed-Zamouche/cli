@@ -307,7 +307,7 @@ static int cli_tokenize(cli_t *cli) {
 
 void cli_print_prompt(cli_t *cli) {
   cli->write(cli->prompt, strlen(cli->prompt));
-  cli->write(">", 1);
+  cli->write("> ", 2);
   cli->flush();
 }
 
