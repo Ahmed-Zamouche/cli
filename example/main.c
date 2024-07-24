@@ -29,11 +29,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "lib/cli.h"
 #include "cmd_list.h"
+#include "lib/cli.h"
 
 #include "uart.h"
 
+#include <stdio.h>
 #include <string.h>
 
 #ifdef WIN32
@@ -65,6 +66,7 @@ void uart_rx_callback(char ch) {
     ; // could not write. buffer full
   }
 }
+char history_buf[1024] = {};
 
 int main(int argc, char **argv) {
   (void)argc;
@@ -74,14 +76,16 @@ int main(int argc, char **argv) {
 
   uart_register_rx_callback(uart_rx_callback);
 
-  cli_init(&cli, &cli_cmd_list);
+  cli_init(&cli, &cli_cmd_list, history_buf, sizeof(history_buf));
 
   cli_print_prompt(&cli);
+
   while (1) {
 
     cli_mainloop(&cli);
 
     sleep_ms(10);
   }
+
   return 0;
 }

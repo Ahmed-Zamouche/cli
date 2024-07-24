@@ -90,8 +90,8 @@ typedef struct cli_cmd_s {
  *
  */
 typedef struct cli_cmd_group_s {
-  const char *name;            /**< Group name*/
-  const char *desc;            /**< Group  description*/
+  const char *name;      /**< Group name*/
+  const char *desc;      /**< Group  description*/
   const cli_cmd_t *cmds; /**< Group commands list see \link cli_cmd_t\endlink*/
   size_t length;         /**< Group commands length */
 } cli_cmd_group_t;
@@ -106,6 +106,13 @@ typedef struct cli_cmd_list_s {
   size_t length; /**< Groups length */
 } cli_cmd_list_t;
 
+struct cli_history_s {
+  char *buf;
+  size_t size;
+  size_t next_last;
+  size_t last;
+  int direction;
+};
 /**
  * @brief Definition of command interpreter struct
  *
@@ -126,6 +133,7 @@ struct cli_s {
   char const *prompt;           /**<  command line prompt*/
   const cli_cmd_list_t
       *cmd_list; /**<  commands list see \link cli_cmd_list_t \endlink*/
+  struct cli_history_s history;
 };
 
 /**
@@ -179,7 +187,8 @@ void cli_mainloop(cli_t *cli);
  * @param cmd_list the command list struct. If NULL only build-in
  * commands are available
  */
-void cli_init(cli_t *cli, const cli_cmd_list_t *cmd_list);
+void cli_init(cli_t *cli, const cli_cmd_list_t *cmd_list, char *history_buf,
+              int history_buf_size);
 
 #ifdef __cplusplus
 }
