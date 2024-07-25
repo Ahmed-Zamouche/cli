@@ -311,6 +311,20 @@ void cli_print_prompt(cli_t *cli) {
   cli->flush();
 }
 
+static void cli_history_init(cli_t *cli, char *buffer, size_t buffer_size) {
+  cli->history.buf = buffer;
+  cli->history.next_last = 0;
+  cli->history.size = buffer_size - (buffer_size % CLI_LINE_MAX);
+  memset(cli->history.buf, 0, cli->history.size);
+  cli->history.direction = 0;
+}
+
+static void cli_history_clear(cli_t *cli) {
+  cli->history.next_last = 0;
+  memset(cli->history.buf, 0, cli->history.size);
+  cli->history.direction = 0;
+}
+
 static void cli_history_push(cli_t *cli, const char *line) {
 
   if (0 == cli->history.size)
@@ -546,6 +560,10 @@ void cli_mainloop(cli_t *cli) {
   }
 
   if (strcmp(cli->argv[0], "history") == 0) {
+    if (cli->argc == 2 && strcmp(cli->argv[1], "clear") == 0) {
+      cli_history_clear(cli);
+      goto cli_mainloop_exit;
+    }
     cli_history_traverse(cli);
     cli->write(CLI_MSG_CMD_OK, strlen(CLI_MSG_CMD_OK));
     goto cli_mainloop_exit;
@@ -581,12 +599,7 @@ void cli_init(cli_t *cli, const cli_cmd_list_t *cmd_list, char *history_buf,
   cli->prompt = cli_default_prompt;
   cli->write = cli_default_write;
   cli->flush = cli_default_flush;
-
+  cli_history_init(cli, history_buf, history_buf_size);
   cli->cmd_quit_cb = cli_cmd_quit_default_cb;
-  cli->history.buf = history_buf;
-  cli->history.next_last = 0;
-  cli->history.size = history_buf_size - (history_buf_size % CLI_LINE_MAX);
-  memset(cli->history.buf, 0, cli->history.size);
-  cli->history.direction = 0;
   cli->cmd_list = cmd_list;
 }

@@ -9,7 +9,7 @@ struct output_buffer {
 class TestCli : public ::testing::Test {
 protected:
   void SetUp() override {
-    cli_init(&_cli, NULL);
+    cli_init(&_cli, NULL, NULL, 0);
     _cli.write = TestCli::write;
     _cli.flush = TestCli::flush;
     _quit_flag = 0;
