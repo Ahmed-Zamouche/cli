@@ -135,7 +135,7 @@ cli_cmd_list_t cli_cmd_list = {
     .length = 0,
 };
 
-TEST_F(TestCli, TestBiildinQuitCmd) {
+TEST_F(TestCli, TestBuildinQuitCmd) {
   cli_puts(&_cli, "quit\n");
   cli_mainloop(&_cli);
   EXPECT_EQ(_quit_flag, 1);
