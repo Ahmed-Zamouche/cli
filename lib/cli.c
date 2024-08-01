@@ -43,6 +43,7 @@
 #define CLI_CMD_LIST_HISTORY_SIZE (64)
 
 static int cli_cmd_echo(cli_t *cli, int argc, char **argv);
+static int cli_cmd_history(cli_t *cli, int argc, char **argv);
 static int cli_cmd_help(cli_t *cli, int argc, char **argv);
 static int cli_cmd_quit(cli_t *cli, int argc, char **argv);
 
@@ -90,6 +91,9 @@ static const cli_cmd_t cli_default_cmd_list[] = {
     {.name = "echo",
      .desc = "(on|off). Turn echoing On or Off",
      .handler = cli_cmd_echo},
+    {.name = "history",
+     .desc = "(|clear). Print or clear past commands",
+     .handler = cli_cmd_history},
     {.name = "quit",
      .desc = "Quit command line interpreter",
      .handler = cli_cmd_quit},
@@ -394,6 +398,26 @@ static void cli_history_traverse(cli_t *cli) {
 }
 
 /**
+ * @brief build-in history command handler
+ *
+ * @param cli the command line interpreter struct
+ * @param argc arguments count
+ * @param argv arguments vector
+ * @return int On success 0 is return. Otherwise non zero value
+ */
+static int cli_cmd_history(cli_t *cli, int argc, char **argv) {
+  if (cli->argc == 1) {
+    cli_history_traverse(cli);
+  } else if (cli->argc == 2 && strcmp(cli->argv[1], "clear") == 0) {
+    cli_history_clear(cli);
+  } else {
+    return -1;
+  }
+
+  return 0;
+}
+
+/**
  * @brief read bytes from the receive buffer and add them to the line buffer.
  * Only printing character are added, If newline delimiter is found the the
  * function return the strlen of line
@@ -556,16 +580,6 @@ void cli_mainloop(cli_t *cli) {
   }
 
   if (cli->argc == 0) {
-    goto cli_mainloop_exit;
-  }
-
-  if (strcmp(cli->argv[0], "history") == 0) {
-    if (cli->argc == 2 && strcmp(cli->argv[1], "clear") == 0) {
-      cli_history_clear(cli);
-      goto cli_mainloop_exit;
-    }
-    cli_history_traverse(cli);
-    cli->write(CLI_MSG_CMD_OK, strlen(CLI_MSG_CMD_OK));
     goto cli_mainloop_exit;
   }
 

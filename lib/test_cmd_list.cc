@@ -1,15 +1,20 @@
 #include "cli.h"
 #include <cstring>
 #include <gtest/gtest.h>
+#include <stdio.h>
 struct output_buffer {
   char data[1024];
   size_t offset;
 };
 
+struct history_buffer {
+  char data[1023];
+};
+
 class TestCli : public ::testing::Test {
 protected:
   void SetUp() override {
-    cli_init(&_cli, NULL, NULL, 0);
+    cli_init(&_cli, NULL, _history_buffer.data, sizeof(_history_buffer.data));
     _cli.write = TestCli::write;
     _cli.flush = TestCli::flush;
     _quit_flag = 0;
@@ -64,8 +69,10 @@ protected:
   static int _quit_flag;
   static int _handler_flag;
   static output_buffer _output_buffer;
+  static history_buffer _history_buffer;
 };
 output_buffer TestCli::_output_buffer{};
+history_buffer TestCli::_history_buffer{};
 int TestCli::_quit_flag;
 int TestCli::_handler_flag;
 
@@ -324,5 +331,39 @@ TEST_F(TestCli, TestLimits) {
     EXPECT_EQ(strcmp(_cli.argv[2],
                      "0123456789abcdef0123456789abcdef0123456789abcdef01234"),
               0);
+  }
+}
+
+TEST_F(TestCli, TestHistoryCmd) {
+  {
+    char buf[32] = {};
+    cli_cmd_list_t *cmd_list = &cli_cmd_list;
+    _cli.cmd_list = cmd_list;
+    add_groups(cmd_list);
+    add_mcu_commands((cli_cmd_group_t **)cmd_list->groups, NULL);
+    for (size_t i = 0; i < 8; i++) {
+      snprintf(buf, sizeof(buf), "cmd %ld\r\n", i);
+      cli_puts(&_cli, buf);
+      cli_mainloop(&_cli);
+    }
+  }
+  clear_output_buffer(_output_buffer);
+  cli_puts(&_cli, "history\r\n");
+  cli_mainloop(&_cli);
+
+  {
+    char buf[1024] = {};
+    int n = 0;
+
+    n = snprintf(buf + n, sizeof(buf) - n, "history\r\n");
+    for (size_t i = 0; i < 8; i++) {
+      n += snprintf(buf + n, sizeof(buf) - n, "cmd %ld\r\n", i);
+    }
+
+    n = snprintf(buf + n, sizeof(buf) - n, "history\r\nOk\r\n");
+    fprintf(stdout, "%s", buf);
+    fprintf(stdout, "------------------------------\r\n");
+    fprintf(stdout, "%s", _output_buffer.data);
+    EXPECT_EQ(memcmp(_output_buffer.data, buf, strlen(buf)), 0);
   }
 }
