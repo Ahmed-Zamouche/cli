@@ -8,11 +8,11 @@ TEST(RingBuffer, BasicPutGet) {
 
   EXPECT_TRUE(ringbuffer_is_empty(&rb));
   EXPECT_FALSE(ringbuffer_is_full(&rb));
-  EXPECT_EQ(ringbuffer_size(&rb), 0);
-  EXPECT_EQ(ringbuffer_capacity(&rb), 3); // 4 - 1
+  EXPECT_EQ(ringbuffer_size(&rb), static_cast<size_t>(0));
+  EXPECT_EQ(ringbuffer_capacity(&rb), static_cast<size_t>(3)); // 4 - 1
 
   EXPECT_EQ(ringbuffer_put(&rb, 'a'), 0);
-  EXPECT_EQ(ringbuffer_size(&rb), 1);
+  EXPECT_EQ(ringbuffer_size(&rb), static_cast<size_t>(1));
   EXPECT_FALSE(ringbuffer_is_empty(&rb));
 
   uint8_t ch;
