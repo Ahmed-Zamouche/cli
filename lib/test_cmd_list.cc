@@ -326,3 +326,23 @@ TEST_F(TestCli, TestLimits) {
               0);
   }
 }
+
+TEST_F(TestCli, TestCaseInsensitivity) {
+  cli_cmd_list_t *cmd_list = &cli_cmd_list;
+  _cli.cmd_list = cmd_list;
+
+  add_groups(cmd_list);
+  add_mcu_commands((cli_cmd_group_t **)cmd_list->groups, TestCli::cmd_handler);
+  add_gpio_commands((cli_cmd_group_t **)cmd_list->groups, TestCli::cmd_handler);
+  add_adc_commands((cli_cmd_group_t **)cmd_list->groups, TestCli::cmd_handler);
+
+  // Test case-insensitive command matching with mixed-case arguments
+  _handler_flag = 0;
+  clear_output_buffer(_output_buffer);
+  cli_puts(&_cli, "MCU ReSet ArgUmeNt\r\n");
+  cli_mainloop(&_cli);
+  EXPECT_EQ(_handler_flag, 1);
+  // Verify arguments preserved original case: "ReSet", "ArgUmeNt"
+  EXPECT_NE(strstr(_output_buffer.data, "`ReSet`"), nullptr);
+  EXPECT_NE(strstr(_output_buffer.data, "`ArgUmeNt`"), nullptr);
+}

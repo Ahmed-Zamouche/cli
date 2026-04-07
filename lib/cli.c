@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 
 #define CLI_CMD_LIST_TRV_NEXT (0)
 #define CLI_CMD_LIST_TRV_SKIP (1)
@@ -329,7 +330,7 @@ static size_t cli_getline(cli_t *cli) {
 
     switch (ch) {
     case '\r':
-    case '\n':
+    case '\n': {
       while (!ringbuffer_peek(&cli->rb_inbuf, (uint8_t *)&ch)) {
         if (ch != '\r' && ch != '\n') {
           break;
@@ -344,6 +345,7 @@ static size_t cli_getline(cli_t *cli) {
         cli_print_prompt(cli);
       }
       return len;
+    }
     case 0x15: // CTRL-U
       while (cli->ptr != cli->line) {
         cli_echo(cli, "\b \b", 3);
@@ -366,9 +368,10 @@ static size_t cli_getline(cli_t *cli) {
     default:
       if (isprint(ch)) {
         if (cli->ptr < (cli->line + sizeof(cli->line) - 1)) {
-          *cli->ptr++ = tolower(ch);
+          *cli->ptr++ = ch; // Preserve original case
           *cli->ptr = '\0';
         } else {
+
           cli->write("\r\n", 2);
           cli->write(CLI_MSG_LINE_LENGTH_ERR, strlen(CLI_MSG_LINE_LENGTH_ERR));
           cli->ptr = NULL;
@@ -405,11 +408,11 @@ static int cli_cmd_run_traverser_cb(cli_t *cli, const cli_cmd_group_t *group,
                                     const cli_cmd_t *cmd) {
 
   if (group && !cmd) {
-    if (strcmp(cli->argv[0], group->name)) {
+    if (strcasecmp(cli->argv[0], group->name)) {
       return CLI_CMD_LIST_TRV_SKIP;
     }
   } else {
-    if (strcmp(cli->argv[1], cmd->name)) {
+    if (strcasecmp(cli->argv[1], cmd->name)) {
       return CLI_CMD_LIST_TRV_SKIP;
     } else {
 
@@ -449,7 +452,7 @@ void cli_mainloop(cli_t *cli) {
 
   for (size_t i = 0; i < ARRAY_SIZE(cli_default_cmd_list); i++) {
 
-    if (!strcmp(cli->argv[0], cli_default_cmd_list[i].name)) {
+    if (!strcasecmp(cli->argv[0], cli_default_cmd_list[i].name)) {
       if (cli_default_cmd_list[i].handler(cli, cli->argc, cli->argv) == 0) {
         cli->write(CLI_MSG_CMD_OK, strlen(CLI_MSG_CMD_OK));
       } else {
