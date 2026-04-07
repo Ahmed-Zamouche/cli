@@ -35,7 +35,7 @@
 #define ringbuffer_unlock(rb)
 
 static bool _ringbuffer_is_empty(const ringbuffer_t *const rb) {
-  return (rb->size == 0);
+  return (rb->wr_pos == rb->rd_pos);
 }
 
 bool ringbuffer_is_empty(const ringbuffer_t *const rb) {
@@ -46,7 +46,7 @@ bool ringbuffer_is_empty(const ringbuffer_t *const rb) {
 }
 
 static bool _ringbuffer_is_full(const ringbuffer_t *const rb) {
-  return (rb->size == rb->capacity);
+  return ((rb->wr_pos + 1) % rb->capacity == rb->rd_pos);
 }
 
 bool ringbuffer_is_full(const ringbuffer_t *const rb) {
@@ -56,10 +56,15 @@ bool ringbuffer_is_full(const ringbuffer_t *const rb) {
   return is_full;
 }
 
-size_t ringbuffer_size(const ringbuffer_t *const rb) { return rb->size; }
+size_t ringbuffer_size(const ringbuffer_t *const rb) {
+  if (rb->wr_pos >= rb->rd_pos) {
+    return rb->wr_pos - rb->rd_pos;
+  }
+  return rb->capacity - (rb->rd_pos - rb->wr_pos);
+}
 
 size_t ringbuffer_capacity(const ringbuffer_t *const rb) {
-  return rb->capacity;
+  return rb->capacity - 1; // 1 byte lost to distinguish empty/full
 }
 
 int ringbuffer_put(ringbuffer_t *rb, uint8_t u8) {
@@ -71,7 +76,6 @@ int ringbuffer_put(ringbuffer_t *rb, uint8_t u8) {
   if (!_ringbuffer_is_full(rb)) {
     rb->buffer[rb->wr_pos] = u8;
     rb->wr_pos = (rb->wr_pos + 1) % rb->capacity;
-    rb->size++;
     res = 0;
   }
 
@@ -88,7 +92,6 @@ int ringbuffer_get(ringbuffer_t *rb, uint8_t *pU8) {
   if (!_ringbuffer_is_empty(rb)) {
     *pU8 = rb->buffer[rb->rd_pos];
     rb->rd_pos = (rb->rd_pos + 1) % rb->capacity;
-    rb->size--;
     res = 0;
   }
 
@@ -115,7 +118,6 @@ int ringbuffer_peek(ringbuffer_t *rb, uint8_t *pU8) {
 void ringbuffer_wrap(ringbuffer_t *rb, uint8_t *buffer, size_t capacity) {
   rb->buffer = buffer;
   rb->capacity = capacity;
-  rb->size = 0;
   rb->wr_pos = 0;
   rb->rd_pos = 0;
 }

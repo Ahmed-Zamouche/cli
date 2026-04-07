@@ -22,3 +22,10 @@ cc_test(
   srcs = ["test_cmd_list.cc"],
   deps = ["@googletest//:gtest_main", ":cli"]
 )
+
+cc_test(
+  name = "test_ringbuffer",
+  size = "small",
+  srcs = ["test_ringbuffer.cc"],
+  deps = ["@googletest//:gtest_main", ":utils"]
+)

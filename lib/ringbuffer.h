@@ -44,7 +44,6 @@ typedef struct ringbuffer_s {
   uint8_t *buffer;
   size_t wr_pos;
   size_t rd_pos;
-  size_t size;
   size_t capacity;
 } ringbuffer_t;
 
