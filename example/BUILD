@@ -14,7 +14,7 @@ cc_library(
     name = "cmd_list",
     srcs = ["cmd_list.c"],
     hdrs = ["cmd_list.h"],
-    deps = ["@cli//lib:cli", ":uart"],
+    deps = ["//lib:cli", ":uart"],
     visibility = ["//visibility:private"],
 )
 

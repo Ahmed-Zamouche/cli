@@ -1,0 +1,21 @@
+bazel_dep(name = "rules_cc", version = "0.2.17")
+bazel_dep(name = "rules_python", version = "1.7.0")
+
+# Use http_archive from bazel_tools since we want a custom BUILD file for googletest
+# to avoid the Bazel 9 "removed native rules" issue.
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "googletest",
+    urls = ["https://github.com/google/googletest/archive/refs/tags/v1.15.2.tar.gz"],
+    strip_prefix = "googletest-1.15.2",
+    build_file = "//third-party:gtest.BUILD",
+)
+
+# Hedron's Compile Commands Extractor for Bazel
+# Note: This version is incompatible with Bazel 9 due to use of native.py_binary
+http_archive(
+    name = "hedron_compile_commands",
+    urls = ["https://github.com/hedronvision/bazel-compile-commands-extractor/archive/ed994039a951b736091776d677f324b3903ef939.tar.gz"],
+    strip_prefix = "bazel-compile-commands-extractor-ed994039a951b736091776d677f324b3903ef939",
+)

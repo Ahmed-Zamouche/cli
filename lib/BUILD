@@ -20,6 +20,5 @@ cc_test(
   name = "test_cmd_list",
   size = "small",
   srcs = ["test_cmd_list.cc"],
-  copts = ["-Iexternal/gtest/googletest/include"],
-  deps = ["@gtest//:main", ":cli"]
+  deps = ["@googletest//:gtest_main", ":cli"]
 )
