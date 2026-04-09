@@ -17,7 +17,7 @@ TEST(RingBuffer, BasicPutGet) {
 
   uint8_t ch;
   EXPECT_EQ(ringbuffer_get(&rb, &ch), 0);
-  EXPECT_EQ(ch, 'a');
+  EXPECT_EQ(ch, static_cast<uint8_t>('a'));
   EXPECT_TRUE(ringbuffer_is_empty(&rb));
 }
 
@@ -63,9 +63,9 @@ TEST(RingBuffer, WrapAround) {
   EXPECT_EQ(ringbuffer_size(&rb), 2);
   
   EXPECT_EQ(ringbuffer_get(&rb, &ch), 0);
-  EXPECT_EQ(ch, '3');
+  EXPECT_EQ(ch, static_cast<uint8_t>('3'));
   EXPECT_EQ(ringbuffer_get(&rb, &ch), 0);
-  EXPECT_EQ(ch, '4');
+  EXPECT_EQ(ch, static_cast<uint8_t>('4'));
   EXPECT_TRUE(ringbuffer_is_empty(&rb));
 }
 
@@ -78,10 +78,10 @@ TEST(RingBuffer, Peek) {
   
   uint8_t ch;
   EXPECT_EQ(ringbuffer_peek(&rb, &ch), 0);
-  EXPECT_EQ(ch, 'x');
+  EXPECT_EQ(ch, static_cast<uint8_t>('x'));
   EXPECT_FALSE(ringbuffer_is_empty(&rb));
   
   EXPECT_EQ(ringbuffer_get(&rb, &ch), 0);
-  EXPECT_EQ(ch, 'x');
+  EXPECT_EQ(ch, static_cast<uint8_t>('x'));
   EXPECT_TRUE(ringbuffer_is_empty(&rb));
 }
