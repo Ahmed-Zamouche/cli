@@ -124,6 +124,8 @@ struct cli_s {
   size_t (*write)(const void *ptr,
                   size_t size); /**<  write to output function*/
   int (*flush)(void);           /**<  flush output function */
+  void (*lock)(void);           /**<  optional lock function */
+  void (*unlock)(void);         /**<  optional unlock function */
   void (*cmd_quit_cb)(void);    /**<  calback function called by quit*/
   char const *prompt;           /**<  command line prompt*/
   const cli_cmd_list_t

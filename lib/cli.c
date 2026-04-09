@@ -404,17 +404,36 @@ static size_t cli_getline(cli_t *cli) {
 }
 
 int cli_putchar(cli_t *cli, int ch) {
-  return ringbuffer_put(&cli->rb_inbuf, ch) ? -1 : ch;
+  int ret;
+  if (cli->lock) {
+    cli->lock();
+  }
+  ret = ringbuffer_put(&cli->rb_inbuf, ch) ? -1 : ch;
+  if (cli->unlock) {
+    cli->unlock();
+  }
+  return ret;
 }
 
 int cli_puts(cli_t *cli, const char *str) {
   const char *p = str;
 
+  if (cli->lock) {
+    cli->lock();
+  }
+
   while (*p) {
-    if (cli_putchar(cli, *p) < 0) {
+    if (ringbuffer_put(&cli->rb_inbuf, *p) < 0) {
+      if (cli->unlock) {
+        cli->unlock();
+      }
       return -1;
     }
     p++;
+  }
+
+  if (cli->unlock) {
+    cli->unlock();
   }
 
   return 0;
@@ -462,8 +481,17 @@ void cli_register_quit_callback(cli_t *cli, void (*cmd_quit_cb)(void)) {
 }
 
 void cli_mainloop(cli_t *cli) {
+  size_t len;
 
-  if (cli_getline(cli) == 0) {
+  if (cli->lock) {
+    cli->lock();
+  }
+  len = cli_getline(cli);
+  if (cli->unlock) {
+    cli->unlock();
+  }
+
+  if (len == 0) {
     return;
   }
 
@@ -505,6 +533,9 @@ void cli_init(cli_t *cli, const cli_cmd_list_t *cmd_list) {
   cli->prompt = cli_default_prompt;
   cli->write = cli_default_write;
   cli->flush = cli_default_flush;
+
+  cli->lock = NULL;
+  cli->unlock = NULL;
 
   cli->cmd_quit_cb = cli_cmd_quit_default_cb;
 
