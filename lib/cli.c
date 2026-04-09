@@ -293,7 +293,7 @@ static int cli_tokenize(cli_t *cli) {
 
   cli->argc = 0;
 
-  while ((token = strtok_r(NULL, " \t", &saveptr))) {
+for (token = strtok_r(cli->line, " \t", &saveptr); token != NULL; token = strtok_r(NULL, " \t", &saveptr)) {
 
     if ((size_t)cli->argc >= ARRAY_SIZE(cli->argv)) {
       return -1;
