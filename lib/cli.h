@@ -104,6 +104,8 @@ typedef struct cli_cmd_list_s {
   const cli_cmd_group_t *
       *groups;   /**< Groups list see \link cli_cmd_group_t\endlink*/
   size_t length; /**< Groups length */
+  const cli_cmd_t *cmds; /**< Top-level commands list see \link cli_cmd_t\endlink*/
+  size_t cmds_length;    /**< Top-level commands length */
 } cli_cmd_list_t;
 
 /**

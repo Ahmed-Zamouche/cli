@@ -374,3 +374,54 @@ TEST_F(TestCli, TestEscHandling) {
   // Handlers should NOT be called because the line was cleared
   EXPECT_EQ(_handler_flag, 0);
 }
+
+TEST_F(TestCli, TestTopLevelCommands) {
+  static const cli_cmd_t top_level_cmds[] = {
+      {.name = "topcmd",
+       .desc = "Top level command",
+       .handler = TestCli::cmd_handler},
+  };
+  cli_cmd_list_t cmd_list = {
+      .groups = NULL,
+      .length = 0,
+      .cmds = top_level_cmds,
+      .cmds_length = ARRAY_SIZE(top_level_cmds),
+  };
+  _cli.cmd_list = &cmd_list;
+
+  _handler_flag = 0;
+  clear_output_buffer(_output_buffer);
+  cli_puts(&_cli, "topcmd arg1\r\n");
+  cli_mainloop(&_cli);
+  EXPECT_EQ(_handler_flag, 1);
+  EXPECT_NE(strstr(_output_buffer.data, "`topcmd`"), nullptr);
+  EXPECT_NE(strstr(_output_buffer.data, "`arg1`"), nullptr);
+}
+
+TEST_F(TestCli, TestGroupedAndTopLevelCommands) {
+  static const cli_cmd_t top_level_cmds[] = {
+      {.name = "topcmd",
+       .desc = "Top level command",
+       .handler = TestCli::cmd_handler},
+  };
+
+  cli_cmd_list_t *cmd_list = &cli_cmd_list;
+  cmd_list->cmds = top_level_cmds;
+  cmd_list->cmds_length = ARRAY_SIZE(top_level_cmds);
+  _cli.cmd_list = cmd_list;
+
+  add_groups(cmd_list);
+  add_mcu_commands((cli_cmd_group_t **)cmd_list->groups, TestCli::cmd_handler);
+
+  // Test top-level
+  _handler_flag = 0;
+  cli_puts(&_cli, "topcmd\r\n");
+  cli_mainloop(&_cli);
+  EXPECT_EQ(_handler_flag, 1);
+
+  // Test grouped
+  _handler_flag = 0;
+  cli_puts(&_cli, "mcu reset\r\n");
+  cli_mainloop(&_cli);
+  EXPECT_EQ(_handler_flag, 1);
+}

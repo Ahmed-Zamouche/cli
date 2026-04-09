@@ -126,7 +126,20 @@ static int cli_cmd_list_traverser(cli_t *cli,
                                   int (*cb)(cli_t *, const cli_cmd_group_t *,
                                             const cli_cmd_t *)) {
 
-  if (cli->cmd_list == NULL || cli->cmd_list->groups == NULL) {
+  if (cli->cmd_list == NULL) {
+    return 0;
+  }
+
+  if (cli->cmd_list->cmds != NULL) {
+    for (size_t i = 0; i < cli->cmd_list->cmds_length; i++) {
+      int ret = cb(cli, NULL, &cli->cmd_list->cmds[i]);
+      if (ret == CLI_CMD_LIST_TRV_END) {
+        return 2;
+      }
+    }
+  }
+
+  if (cli->cmd_list->groups == NULL) {
     return 0;
   }
 
@@ -173,9 +186,11 @@ static int cli_cmd_help_traverser_cb(cli_t *cli, const cli_cmd_group_t *group,
     desc = group->desc;
     cli->write("\r\n", 2);
   } else {
+    if (group) {
+      cli->write(" ", 1);
+    }
     name = cmd->name;
     desc = cmd->desc;
-    cli->write(" ", 1);
   }
 
   cli->write(name, strlen(name));
@@ -412,8 +427,18 @@ static int cli_cmd_run_traverser_cb(cli_t *cli, const cli_cmd_group_t *group,
     if (strcasecmp(cli->argv[0], group->name)) {
       return CLI_CMD_LIST_TRV_SKIP;
     }
-  } else {
-    if (strcasecmp(cli->argv[1], cmd->name)) {
+  } else if (cmd) {
+    const char *cmd_name_to_match;
+    if (group) {
+      if (cli->argc < 2) {
+        return CLI_CMD_LIST_TRV_SKIP;
+      }
+      cmd_name_to_match = cli->argv[1];
+    } else {
+      cmd_name_to_match = cli->argv[0];
+    }
+
+    if (strcasecmp(cmd_name_to_match, cmd->name)) {
       return CLI_CMD_LIST_TRV_SKIP;
     } else {
 
@@ -463,7 +488,7 @@ void cli_mainloop(cli_t *cli) {
     }
   }
 
-  if (cli->argc < 2 || !cli_cmd_list_traverser(cli, cli_cmd_run_traverser_cb)) {
+  if (!cli_cmd_list_traverser(cli, cli_cmd_run_traverser_cb)) {
     cli->write(CLI_MSG_CMD_UNKNOWN, strlen(CLI_MSG_CMD_UNKNOWN));
   }
 cli_mainloop_exit:

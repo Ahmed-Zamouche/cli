@@ -105,9 +105,24 @@ static const cli_cmd_group_t *cli_cmd_group[] = {
     &cli_cmd_adc_group,
 };
 
+static const cli_cmd_t cli_cmd_top_level_list[] = {
+    {
+        .name = "uptime",
+        .desc = "Show system uptime",
+        .handler = cli_cmd_handler,
+    },
+    {
+        .name = "version",
+        .desc = "Show system version",
+        .handler = cli_cmd_handler,
+    },
+};
+
 const cli_cmd_list_t cli_cmd_list = {
     .groups = cli_cmd_group,
     .length = ARRAY_SIZE(cli_cmd_group),
+    .cmds = cli_cmd_top_level_list,
+    .cmds_length = ARRAY_SIZE(cli_cmd_top_level_list),
 };
 
 static int cli_cmd_handler(cli_t *cli, int argc, char **argv) {
