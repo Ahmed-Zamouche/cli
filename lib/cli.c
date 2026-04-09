@@ -354,9 +354,10 @@ static size_t cli_getline(cli_t *cli) {
       *cli->ptr = '\0';
       break;
     case '\e': // ESC
-      cli_echo(cli, "^[ \r\n", 5);
+      cli->write("\r\n", 2);
       cli->ptr = cli->line;
       *cli->ptr = '\0';
+      cli_print_prompt(cli);
       break;
     case '\b': // <-
     case 0x7f:

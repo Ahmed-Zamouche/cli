@@ -360,3 +360,17 @@ TEST_F(TestCli, TestEchoSanitization) {
     EXPECT_NE(_output_buffer.data[i], 0x01);
   }
 }
+
+TEST_F(TestCli, TestEscHandling) {
+  _handler_flag = 0;
+  clear_output_buffer(_output_buffer);
+  cli_puts(&_cli, "help"); // Type something
+  cli_putchar(&_cli, '\e'); // Press ESC to clear
+  cli_puts(&_cli, "\r\n"); // Press Enter
+  cli_mainloop(&_cli);
+
+  // Prompt should be reprinted on a new line after ESC
+  EXPECT_NE(strstr(_output_buffer.data, "\r\n" CLI_PROMPT ">"), nullptr);
+  // Handlers should NOT be called because the line was cleared
+  EXPECT_EQ(_handler_flag, 0);
+}
