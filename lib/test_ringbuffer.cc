@@ -31,7 +31,7 @@ TEST(RingBuffer, FullCondition) {
   EXPECT_EQ(ringbuffer_put(&rb, '3'), 0);
   
   EXPECT_TRUE(ringbuffer_is_full(&rb));
-  EXPECT_EQ(ringbuffer_size(&rb), 3);
+  EXPECT_EQ(ringbuffer_size(&rb), static_cast<size_t>(3));
   
   // This should fail
   EXPECT_EQ(ringbuffer_put(&rb, '4'), -1);
