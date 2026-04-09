@@ -370,6 +370,7 @@ static size_t cli_getline(cli_t *cli) {
         if (cli->ptr < (cli->line + sizeof(cli->line) - 1)) {
           *cli->ptr++ = ch; // Preserve original case
           *cli->ptr = '\0';
+          cli_echo(cli, &ch, 1);
         } else {
 
           cli->write("\r\n", 2);
@@ -379,7 +380,6 @@ static size_t cli_getline(cli_t *cli) {
           return 0;
         }
       }
-      cli_echo(cli, &ch, 1);
       break;
     }
   }

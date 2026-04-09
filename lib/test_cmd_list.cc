@@ -346,3 +346,17 @@ TEST_F(TestCli, TestCaseInsensitivity) {
   EXPECT_NE(strstr(_output_buffer.data, "`ReSet`"), nullptr);
   EXPECT_NE(strstr(_output_buffer.data, "`ArgUmeNt`"), nullptr);
 }
+
+TEST_F(TestCli, TestEchoSanitization) {
+  _handler_flag = 0;
+  clear_output_buffer(_output_buffer);
+  cli_putchar(&_cli, 'a');
+  cli_putchar(&_cli, 0x01); // Should NOT be echoed
+  cli_putchar(&_cli, '\r');
+  cli_putchar(&_cli, '\n');
+  cli_mainloop(&_cli);
+
+  for (size_t i = 0; i < _output_buffer.offset; i++) {
+    EXPECT_NE(_output_buffer.data[i], 0x01);
+  }
+}
