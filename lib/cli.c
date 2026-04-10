@@ -81,21 +81,22 @@ static size_t cli_default_write(const void *ptr, size_t size) {
  *
  * @return int  Upon successful completion 0 is returned.
  */
-static int cli_default_flush(void) { 
-  return 0;  // No-op for embedded
+static int cli_default_flush(void) {
+  return 0; // No-op for embedded
 }
 
 /**
  * @brief default quit callback function if none is registered
  *
  */
-static void cli_cmd_quit_default_cb(void) { 
+static void cli_cmd_quit_default_cb(void) {
   // For embedded systems, quitting might mean:
   // - Returning to main menu
   // - Entering low-power mode
   // - Restarting the CLI
   // User should override this with their own handler
-  while (1) {}  // Default: infinite loop (safer than exit())
+  while (1) {
+  } // Default: infinite loop (safer than exit())
 }
 
 /**
@@ -112,7 +113,7 @@ static const cli_cmd_t cli_default_cmd_list[] = {
     {.name = "history",
      .desc = "(|clear). Print or clear past commands",
      .handler = cli_cmd_history},
-#endif  /* CLI_USE_HISTORY */
+#endif /* CLI_USE_HISTORY */
     {.name = "quit",
      .desc = "Quit command line interpreter",
      .handler = cli_cmd_quit},
@@ -458,7 +459,7 @@ static void cli_history_navigate(cli_t *cli, bool up) {
     cli->ptr = cli->line;
   }
 }
-#endif  /* CLI_USE_HISTORY */
+#endif /* CLI_USE_HISTORY */
 
 /**
  * @brief read bytes from the receive buffer and add them to the line buffer.
@@ -528,7 +529,7 @@ static size_t cli_getline(cli_t *cli) {
     case 0x10: // CTRL-P
 #ifdef CLI_USE_HISTORY
       cli_history_navigate(cli, true);
-#endif   /* CLI_USE_HISTORY */
+#endif /* CLI_USE_HISTORY */
       break;
     case 0x0E: // CTRL-N
 #ifdef CLI_USE_HISTORY
@@ -543,7 +544,7 @@ static size_t cli_getline(cli_t *cli) {
       cli->ptr = cli->line;
       *cli->ptr = '\0';
       cli_print_prompt(cli);
-#endif   /* CLI_USE_HISTORY */
+#endif /* CLI_USE_HISTORY */
       break;
     case '\b': // <-
     case 0x7f:
@@ -568,7 +569,7 @@ static size_t cli_getline(cli_t *cli) {
         }
         break;
       }
-#endif   /* CLI_USE_HISTORY */
+#endif /* CLI_USE_HISTORY */
       if (isprint(ch)) {
         if (cli->ptr < (cli->line + sizeof(cli->line) - 1)) {
           *cli->ptr++ = ch; // Preserve original case
@@ -632,19 +633,19 @@ static int cli_strcasecmp(const char *s1, const char *s2) {
   while (*s1 && *s2) {
     unsigned char c1 = (unsigned char)*s1;
     unsigned char c2 = (unsigned char)*s2;
-    
+
     if (tolower(c1) != tolower(c2)) {
       return (int)tolower(c1) - (int)tolower(c2);
     }
     s1++;
     s2++;
   }
-  
+
   // Check if both strings ended
   if (*s1 == '\0' && *s2 == '\0') {
     return 0;
   }
-  
+
   // One string is longer
   return (int)tolower((unsigned char)*s1) - (int)tolower((unsigned char)*s2);
 }
