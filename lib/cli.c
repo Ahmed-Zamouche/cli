@@ -71,8 +71,9 @@ static size_t cli_default_write(const void *ptr, size_t size) {
   // For embedded systems without stdio, this should be overridden
   // by the user. Here we provide a minimal implementation that
   // works for both embedded and desktop systems.
-#ifndef CLI_NO_STDIO
-  // On systems with stdio, write to stdout
+#if defined(__unix__) || defined(__linux__) || defined(_POSIX_VERSION) || \
+    (defined(__APPLE__) && defined(__MACH__)) || defined(_WIN32)
+  // On POSIX/Windows systems with stdio, write to stdout
   return fwrite(ptr, size, 1, stdout);
 #else
   // For embedded systems without stdio, this should be overridden
@@ -89,7 +90,8 @@ static size_t cli_default_write(const void *ptr, size_t size) {
  * @return int  Upon successful completion 0 is returned.
  */
 static int cli_default_flush(void) {
-#ifndef CLI_NO_STDIO
+#if defined(__unix__) || defined(__linux__) || defined(_POSIX_VERSION) || \
+    (defined(__APPLE__) && defined(__MACH__)) || defined(_WIN32)
   return fflush(stdout);
 #else
   return 0; // No-op for embedded
@@ -106,8 +108,15 @@ static void cli_cmd_quit_default_cb(void) {
   // - Entering low-power mode
   // - Restarting the CLI
   // User should override this with their own handler
+#if defined(__unix__) || defined(__linux__) || defined(_POSIX_VERSION) || \
+    (defined(__APPLE__) && defined(__MACH__)) || defined(_WIN32)
+  // On desktop systems, exit the program
+  exit(0);
+#else
+  // For embedded systems, safer to loop
   while (1) {
-  } // Default: infinite loop (safer than exit())
+  }
+#endif
 }
 
 /**

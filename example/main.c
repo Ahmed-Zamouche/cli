@@ -34,6 +34,7 @@
 
 #include "uart.h"
 
+#include <stdio.h>
 #include <string.h>
 
 #ifdef WIN32
@@ -88,7 +89,7 @@ int main(int argc, char **argv) {
   uart_register_rx_callback(uart_rx_callback);
 
   cli_init(&cli, &cli_cmd_list);
-  
+
   // Set write function to use our wrapper
   cli.write = uart_write_wrapper;
   cli.flush = uart_flush;
