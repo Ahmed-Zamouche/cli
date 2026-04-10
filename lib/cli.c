@@ -70,10 +70,17 @@ static const char *const CLI_MSG_CMD_UNKNOWN = "Unknown command\r\n";
 static size_t cli_default_write(const void *ptr, size_t size) {
   // For embedded systems without stdio, this should be overridden
   // by the user. Here we provide a minimal implementation that
-  // does nothing but returns success.
+  // works for both embedded and desktop systems.
+#ifndef CLI_NO_STDIO
+  // On systems with stdio, write to stdout
+  return fwrite(ptr, size, 1, stdout);
+#else
+  // For embedded systems without stdio, this should be overridden
+  // Return success without actually writing
   (void)ptr;
   (void)size;
   return size;
+#endif
 }
 
 /**
@@ -82,7 +89,11 @@ static size_t cli_default_write(const void *ptr, size_t size) {
  * @return int  Upon successful completion 0 is returned.
  */
 static int cli_default_flush(void) {
+#ifndef CLI_NO_STDIO
+  return fflush(stdout);
+#else
   return 0; // No-op for embedded
+#endif
 }
 
 /**
@@ -149,7 +160,7 @@ static int cli_cmd_clear(cli_t *cli, int argc, char **argv) {
     return -1;
   }
 
-  cli->write("\e[2J\e[H", 7);
+  cli->write("\x1b[2J\x1b[H", 7);
 
   return 0;
 }
@@ -511,7 +522,7 @@ static size_t cli_getline(cli_t *cli) {
       cli_print_prompt(cli);
       break;
     case 0x0C: // CTRL-L
-      cli->write("\e[2J\e[H", 7);
+      cli->write("\x1b[2J\x1b[H", 7);
       cli_print_prompt(cli);
       cli_echo(cli, cli->line, strlen(cli->line));
       break;

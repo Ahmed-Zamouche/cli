@@ -75,6 +75,10 @@ int main(int argc, char **argv) {
   uart_register_rx_callback(uart_rx_callback);
 
   cli_init(&cli, &cli_cmd_list);
+  
+  // Set write function to use uart_putchar for output
+  cli.write = (size_t (*)(const void *, size_t))uart_putchar;
+  cli.flush = (int (*)(void))uart_flush;
 
   cli_print_prompt(&cli);
   while (1) {
