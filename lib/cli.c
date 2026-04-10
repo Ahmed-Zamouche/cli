@@ -146,7 +146,8 @@ static void cli_history_push(cli_t *cli, const char *line) {
   }
   // Don't add if same as last
   if (cli->history.count > 0) {
-    size_t last_idx = (cli->history.write_idx + CLI_HISTORY_NUM - 1) % CLI_HISTORY_NUM;
+    size_t last_idx =
+        (cli->history.write_idx + CLI_HISTORY_NUM - 1) % CLI_HISTORY_NUM;
     if (strcmp(cli->history.buf[last_idx], line) == 0) {
       return;
     }
@@ -173,7 +174,9 @@ static int cli_cmd_history(cli_t *cli, int argc, char **argv) {
   }
 
   for (size_t i = 0; i < cli->history.count; i++) {
-    size_t idx = (cli->history.write_idx + CLI_HISTORY_NUM - cli->history.count + i) % CLI_HISTORY_NUM;
+    size_t idx =
+        (cli->history.write_idx + CLI_HISTORY_NUM - cli->history.count + i) %
+        CLI_HISTORY_NUM;
     char num[24];
     snprintf(num, sizeof(num), "%2zu ", i + 1);
     cli->write(num, strlen(num));
@@ -383,7 +386,8 @@ static int cli_tokenize(cli_t *cli) {
 
   cli->argc = 0;
 
-for (token = strtok_r(cli->line, " \t", &saveptr); token != NULL; token = strtok_r(NULL, " \t", &saveptr)) {
+  for (token = strtok_r(cli->line, " \t", &saveptr); token != NULL;
+       token = strtok_r(NULL, " \t", &saveptr)) {
 
     if ((size_t)cli->argc >= ARRAY_SIZE(cli->argv)) {
       return -1;
@@ -429,7 +433,9 @@ static void cli_history_navigate(cli_t *cli, bool up) {
   }
 
   if (cli->history.browse_idx != -1) {
-    size_t idx = (cli->history.write_idx + CLI_HISTORY_NUM - cli->history.count + (size_t)cli->history.browse_idx) % CLI_HISTORY_NUM;
+    size_t idx = (cli->history.write_idx + CLI_HISTORY_NUM -
+                  cli->history.count + (size_t)cli->history.browse_idx) %
+                 CLI_HISTORY_NUM;
     strncpy(cli->line, cli->history.buf[idx], CLI_LINE_MAX - 1);
     cli->line[CLI_LINE_MAX - 1] = '\0';
     cli->ptr = cli->line + strlen(cli->line);

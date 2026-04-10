@@ -159,14 +159,14 @@ TEST_F(TestCli, TestBuildinHelpCmd) {
 }
 
 TEST_F(TestCli, ClearCmd) {
-    cli_puts(&_cli, "clear\n");
-    cli_mainloop(&_cli);
-    
-    // Check if the ANSI escape sequence for clearing screen was sent
-    // Look for "\x1b[2J\x1b[H" in _output_buffer.data
-    const char* clear_seq = "\x1b[2J\x1b[H";
-    bool found_clear_seq = (strstr(_output_buffer.data, clear_seq) != nullptr);
-    EXPECT_TRUE(found_clear_seq);
+  cli_puts(&_cli, "clear\n");
+  cli_mainloop(&_cli);
+
+  // Check if the ANSI escape sequence for clearing screen was sent
+  // Look for "\x1b[2J\x1b[H" in _output_buffer.data
+  const char *clear_seq = "\x1b[2J\x1b[H";
+  bool found_clear_seq = (strstr(_output_buffer.data, clear_seq) != nullptr);
+  EXPECT_TRUE(found_clear_seq);
 }
 
 TEST_F(TestCli, TestNullCmdGroup) {

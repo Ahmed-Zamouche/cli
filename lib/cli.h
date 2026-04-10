@@ -94,8 +94,8 @@ typedef struct cli_cmd_s {
  *
  */
 typedef struct cli_cmd_group_s {
-  const char *name;            /**< Group name*/
-  const char *desc;            /**< Group  description*/
+  const char *name;      /**< Group name*/
+  const char *desc;      /**< Group  description*/
   const cli_cmd_t *cmds; /**< Group commands list see \link cli_cmd_t\endlink*/
   size_t length;         /**< Group commands length */
 } cli_cmd_group_t;
@@ -108,8 +108,9 @@ typedef struct cli_cmd_list_s {
   const cli_cmd_group_t *
       *groups;   /**< Groups list see \link cli_cmd_group_t\endlink*/
   size_t length; /**< Groups length */
-  const cli_cmd_t *cmds; /**< Top-level commands list see \link cli_cmd_t\endlink*/
-  size_t cmds_length;    /**< Top-level commands length */
+  const cli_cmd_t
+      *cmds;          /**< Top-level commands list see \link cli_cmd_t\endlink*/
+  size_t cmds_length; /**< Top-level commands length */
 } cli_cmd_list_t;
 
 /**
@@ -130,10 +131,10 @@ struct cli_s {
   } history;
   int esc_state;
 #endif
-  int argc;                   /**<  number of arguments */
-  char *argv[CLI_ARGV_NUM];   /**<  arguments vector*/
-  ringbuffer_t rb_inbuf;      /**< ring buffer used received bytes see \link
-                                 ringbuffer_t \endlink*/
+  int argc;                 /**<  number of arguments */
+  char *argv[CLI_ARGV_NUM]; /**<  arguments vector*/
+  ringbuffer_t rb_inbuf;    /**< ring buffer used received bytes see \link
+                               ringbuffer_t \endlink*/
   size_t (*write)(const void *ptr,
                   size_t size); /**<  write to output function*/
   int (*flush)(void);           /**<  flush output function */
