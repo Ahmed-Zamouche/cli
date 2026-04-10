@@ -35,7 +35,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
+// strings.h may not be available on all embedded toolchains
+// We'll provide our own strcasecmp if needed
 
 #define CLI_CMD_LIST_TRV_NEXT (0)
 #define CLI_CMD_LIST_TRV_SKIP (1)
@@ -67,22 +68,35 @@ static const char *const CLI_MSG_CMD_UNKNOWN = "Unknown command\r\n";
  * Otherwise, less than size or 0 is returned
  */
 static size_t cli_default_write(const void *ptr, size_t size) {
-  return fwrite(ptr, size, 1, stdout);
+  // For embedded systems without stdio, this should be overridden
+  // by the user. Here we provide a minimal implementation that
+  // does nothing but returns success.
+  (void)ptr;
+  (void)size;
+  return size;
 }
 
 /**
- * @brief default quit callback function if none is registred
+ * @brief default flush callback function if none is registered
  *
- * @return int  Upon successful completion 0 is returned.  Otherwise, -1 is
- * returned
+ * @return int  Upon successful completion 0 is returned.
  */
-static int cli_default_flush(void) { return fflush(stdout); }
+static int cli_default_flush(void) { 
+  return 0;  // No-op for embedded
+}
 
 /**
- * @brief default quit callback function if none is registred
+ * @brief default quit callback function if none is registered
  *
  */
-static void cli_cmd_quit_default_cb(void) { exit(0); }
+static void cli_cmd_quit_default_cb(void) { 
+  // For embedded systems, quitting might mean:
+  // - Returning to main menu
+  // - Entering low-power mode
+  // - Restarting the CLI
+  // User should override this with their own handler
+  while (1) {}  // Default: infinite loop (safer than exit())
+}
 
 /**
  * @brief build-in default command list
@@ -380,7 +394,6 @@ static void cli_echo(cli_t *cli, const void *ptr, size_t size) {
  * CLI_ARGV_NUM \endlink
  */
 static int cli_tokenize(cli_t *cli) {
-
   char *token;
   char *saveptr = cli->line;
 
@@ -613,11 +626,34 @@ int cli_puts(cli_t *cli, const char *str) {
   return 0;
 }
 
+// Embedded-friendly case-insensitive string comparison
+// Use this instead of strcasecmp() which may not be available
+static int cli_strcasecmp(const char *s1, const char *s2) {
+  while (*s1 && *s2) {
+    unsigned char c1 = (unsigned char)*s1;
+    unsigned char c2 = (unsigned char)*s2;
+    
+    if (tolower(c1) != tolower(c2)) {
+      return (int)tolower(c1) - (int)tolower(c2);
+    }
+    s1++;
+    s2++;
+  }
+  
+  // Check if both strings ended
+  if (*s1 == '\0' && *s2 == '\0') {
+    return 0;
+  }
+  
+  // One string is longer
+  return (int)tolower((unsigned char)*s1) - (int)tolower((unsigned char)*s2);
+}
+
 static int cli_cmd_run_traverser_cb(cli_t *cli, const cli_cmd_group_t *group,
                                     const cli_cmd_t *cmd) {
 
   if (group && !cmd) {
-    if (strcasecmp(cli->argv[0], group->name)) {
+    if (cli_strcasecmp(cli->argv[0], group->name)) {
       return CLI_CMD_LIST_TRV_SKIP;
     }
   } else if (cmd) {
@@ -631,7 +667,7 @@ static int cli_cmd_run_traverser_cb(cli_t *cli, const cli_cmd_group_t *group,
       cmd_name_to_match = cli->argv[0];
     }
 
-    if (strcasecmp(cmd_name_to_match, cmd->name)) {
+    if (cli_strcasecmp(cmd_name_to_match, cmd->name)) {
       return CLI_CMD_LIST_TRV_SKIP;
     } else {
 
@@ -689,7 +725,7 @@ void cli_mainloop(cli_t *cli) {
 
   for (size_t i = 0; i < ARRAY_SIZE(cli_default_cmd_list); i++) {
 
-    if (!strcasecmp(cli->argv[0], cli_default_cmd_list[i].name)) {
+    if (!cli_strcasecmp(cli->argv[0], cli_default_cmd_list[i].name)) {
 #ifdef CLI_USE_HISTORY
       cli_history_push(cli, line_copy);
 #endif

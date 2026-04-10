@@ -19,9 +19,49 @@
 
 ### Prerequisites
 
-- C compiler (GCC, Clang, or MSVC)
-- CMake or Bazel (for building examples and tests)
-- For tests: Google Test framework
+- C compiler (GCC, Clang, MSVC, or any C99-compliant embedded compiler)
+- For desktop testing: CMake or Bazel (optional)
+- For embedded: No operating system required (bare-metal friendly)
+
+### Embedded-Specific Considerations
+
+1. **Memory Configuration**: Adjust buffer sizes according to your RAM constraints:
+   ```c
+   #define CLI_LINE_MAX 32      // Reduce for memory-constrained systems
+   #define CLI_HISTORY_NUM 4    // Reduce or disable history
+   #define CLI_USE_HISTORY      // Comment out to disable
+   ```
+
+2. **I/O Implementation**: Override default write/flush functions:
+   ```c
+   size_t my_write(const void *ptr, size_t size) {
+       // Send to UART, USB, etc.
+       uart_send_blocking(ptr, size);
+       return size;
+   }
+   
+   cli_t cli;
+   cli_init(&cli, &cmd_list);
+   cli.write = my_write;
+   ```
+
+3. **Quit Handler**: The default quit handler enters an infinite loop.
+   Override it for your application:
+   ```c
+   void my_quit_handler(void) {
+       // Return to main menu, enter sleep, etc.
+   }
+   cli_register_quit_callback(&cli, my_quit_handler);
+   ```
+
+4. **Minimal Configuration**: For most constrained systems:
+   ```c
+   #define CLI_LINE_MAX 32
+   #define CLI_IN_BUF_MAX 32
+   #define CLI_ARGV_NUM 4
+   // #define CLI_USE_HISTORY  // Disabled to save 512 bytes
+   #include "cli.h"
+   ```
 
 ### Basic Usage
 
