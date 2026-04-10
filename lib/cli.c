@@ -462,6 +462,28 @@ static size_t cli_getline(cli_t *cli) {
       }
       *cli->ptr = '\0';
       break;
+    case 0x03: // CTRL-C
+      cli->write("^C\r\n", 4);
+      cli->ptr = cli->line;
+      *cli->ptr = '\0';
+      cli_print_prompt(cli);
+      break;
+    case 0x0C: // CTRL-L
+      cli->write("\e[2J\e[H", 7);
+      cli_print_prompt(cli);
+      cli_echo(cli, cli->line, strlen(cli->line));
+      break;
+    case 0x17: // CTRL-W
+      while (cli->ptr > cli->line && isspace((unsigned char)cli->ptr[-1])) {
+        cli_echo(cli, "\b \b", 3);
+        --cli->ptr;
+      }
+      while (cli->ptr > cli->line && !isspace((unsigned char)cli->ptr[-1])) {
+        cli_echo(cli, "\b \b", 3);
+        --cli->ptr;
+      }
+      *cli->ptr = '\0';
+      break;
     case 0x10: // CTRL-P
 #ifdef CLI_USE_HISTORY
       cli_history_navigate(cli, true);

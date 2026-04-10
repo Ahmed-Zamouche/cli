@@ -203,3 +203,31 @@ TEST_F(CliHistoryTest, CtrlPAndCtrlN) {
     cli_mainloop(&cli);
     EXPECT_STREQ(cli.line, "");
 }
+
+TEST_F(CliHistoryTest, Shortcuts) {
+    // Test CTRL-C (0x03)
+    cli_puts(&cli, "some text");
+    cli_putchar(&cli, 0x03);
+    cli_mainloop(&cli);
+    EXPECT_STREQ(cli.line, "");
+    
+    // Test CTRL-L (0x0C)
+    cli_puts(&cli, "maintain text");
+    cli_putchar(&cli, 0x0C);
+    cli_mainloop(&cli);
+    EXPECT_STREQ(cli.line, "maintain text");
+
+    // Reset line for next sub-test
+    cli_putchar(&cli, 0x15); // CTRL-U
+    cli_mainloop(&cli);
+    
+    // Test CTRL-W (0x17)
+    cli_puts(&cli, "word1 word2");
+    cli_putchar(&cli, 0x17);
+    cli_mainloop(&cli);
+    EXPECT_STREQ(cli.line, "word1 ");
+    
+    cli_putchar(&cli, 0x17);
+    cli_mainloop(&cli);
+    EXPECT_STREQ(cli.line, "");
+}
