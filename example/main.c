@@ -66,6 +66,19 @@ void uart_rx_callback(char ch) {
   }
 }
 
+// Wrapper function to adapt uart_putchar to cli.write signature
+static size_t uart_write_wrapper(const void *ptr, size_t size) {
+  const char *p = (const char *)ptr;
+  size_t written = 0;
+  for (size_t i = 0; i < size; i++) {
+    if (uart_putchar(p[i]) == EOF) {
+      break;
+    }
+    written++;
+  }
+  return written;
+}
+
 int main(int argc, char **argv) {
   (void)argc;
   (void)argv;
@@ -76,9 +89,9 @@ int main(int argc, char **argv) {
 
   cli_init(&cli, &cli_cmd_list);
   
-  // Set write function to use uart_putchar for output
-  cli.write = (size_t (*)(const void *, size_t))uart_putchar;
-  cli.flush = (int (*)(void))uart_flush;
+  // Set write function to use our wrapper
+  cli.write = uart_write_wrapper;
+  cli.flush = uart_flush;
 
   cli_print_prompt(&cli);
   while (1) {
