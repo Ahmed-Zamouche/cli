@@ -44,6 +44,7 @@
 static int cli_cmd_echo(cli_t *cli, int argc, char **argv);
 static int cli_cmd_help(cli_t *cli, int argc, char **argv);
 static int cli_cmd_quit(cli_t *cli, int argc, char **argv);
+static int cli_cmd_clear(cli_t *cli, int argc, char **argv);
 #ifdef CLI_USE_HISTORY
 static int cli_cmd_history(cli_t *cli, int argc, char **argv);
 #endif
@@ -92,6 +93,7 @@ static const cli_cmd_t cli_default_cmd_list[] = {
     {.name = "echo",
      .desc = "(on|off). Turn echoing On or Off",
      .handler = cli_cmd_echo},
+    {.name = "clear", .desc = "Clear screen", .handler = cli_cmd_clear},
 #ifdef CLI_USE_HISTORY
     {.name = "history",
      .desc = "(|clear). Print or clear past commands",
@@ -114,6 +116,26 @@ static int cli_cmd_default_handler(cli_t *cli, int argc, char **argv) {
   (void)cli;
   (void)argc;
   (void)argv;
+  return 0;
+}
+
+/**
+ * @brief build-in clear command handler
+ *
+ * @param cli the command line interpreter struct
+ * @param argc arguments count
+ * @param argv arguments vector
+ * @return int On success 0 is return. Otherwise non zero value
+ */
+static int cli_cmd_clear(cli_t *cli, int argc, char **argv) {
+  (void)argv;
+
+  if (argc != 1) {
+    return -1;
+  }
+
+  cli->write("\e[2J\e[H", 7);
+
   return 0;
 }
 
