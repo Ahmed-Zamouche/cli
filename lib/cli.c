@@ -112,7 +112,7 @@ static const cli_cmd_t cli_default_cmd_list[] = {
     {.name = "history",
      .desc = "(|clear). Print or clear past commands",
      .handler = cli_cmd_history},
-#endif
+#endif  /* CLI_USE_HISTORY */
     {.name = "quit",
      .desc = "Quit command line interpreter",
      .handler = cli_cmd_quit},
@@ -458,7 +458,7 @@ static void cli_history_navigate(cli_t *cli, bool up) {
     cli->ptr = cli->line;
   }
 }
-#endif
+#endif  /* CLI_USE_HISTORY */
 
 /**
  * @brief read bytes from the receive buffer and add them to the line buffer.
@@ -528,7 +528,7 @@ static size_t cli_getline(cli_t *cli) {
     case 0x10: // CTRL-P
 #ifdef CLI_USE_HISTORY
       cli_history_navigate(cli, true);
-#endif
+#endif   /* CLI_USE_HISTORY */
       break;
     case 0x0E: // CTRL-N
 #ifdef CLI_USE_HISTORY
@@ -543,7 +543,7 @@ static size_t cli_getline(cli_t *cli) {
       cli->ptr = cli->line;
       *cli->ptr = '\0';
       cli_print_prompt(cli);
-#endif
+#endif   /* CLI_USE_HISTORY */
       break;
     case '\b': // <-
     case 0x7f:
@@ -568,7 +568,7 @@ static size_t cli_getline(cli_t *cli) {
         }
         break;
       }
-#endif
+#endif   /* CLI_USE_HISTORY */
       if (isprint(ch)) {
         if (cli->ptr < (cli->line + sizeof(cli->line) - 1)) {
           *cli->ptr++ = ch; // Preserve original case
