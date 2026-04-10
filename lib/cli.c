@@ -396,7 +396,7 @@ for (token = strtok_r(cli->line, " \t", &saveptr); token != NULL; token = strtok
 
 void cli_print_prompt(cli_t *cli) {
   cli->write(cli->prompt, strlen(cli->prompt));
-  cli->write(">", 1);
+  cli->write("> ", 2);
   cli->flush();
 }
 
