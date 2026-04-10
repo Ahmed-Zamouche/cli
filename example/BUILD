@@ -14,7 +14,8 @@ cc_library(
     name = "cmd_list",
     srcs = ["cmd_list.c"],
     hdrs = ["cmd_list.h"],
-    deps = ["//lib:cli", ":uart"],
+    deps = ["//lib:cli_history", ":uart"],
+    defines = ["CLI_USE_HISTORY"],
     visibility = ["//visibility:private"],
 )
 
@@ -22,6 +23,7 @@ cc_binary(
   name = "cli_example",
     srcs = ["main.c"],
     deps = [":cmd_list", ":uart"],
+    defines = ["CLI_USE_HISTORY"],
     visibility = ["//visibility:public"],
 )
 

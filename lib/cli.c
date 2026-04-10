@@ -44,6 +44,9 @@
 static int cli_cmd_echo(cli_t *cli, int argc, char **argv);
 static int cli_cmd_help(cli_t *cli, int argc, char **argv);
 static int cli_cmd_quit(cli_t *cli, int argc, char **argv);
+#ifdef CLI_USE_HISTORY
+static int cli_cmd_history(cli_t *cli, int argc, char **argv);
+#endif
 
 static const char *const cli_default_prompt = CLI_PROMPT;
 static const char *const CLI_MSG_CMD_OK = "Ok\r\n";
@@ -89,6 +92,11 @@ static const cli_cmd_t cli_default_cmd_list[] = {
     {.name = "echo",
      .desc = "(on|off). Turn echoing On or Off",
      .handler = cli_cmd_echo},
+#ifdef CLI_USE_HISTORY
+    {.name = "history",
+     .desc = "(|clear). Print or clear past commands",
+     .handler = cli_cmd_history},
+#endif
     {.name = "quit",
      .desc = "Quit command line interpreter",
      .handler = cli_cmd_quit},
@@ -108,6 +116,51 @@ static int cli_cmd_default_handler(cli_t *cli, int argc, char **argv) {
   (void)argv;
   return 0;
 }
+
+#ifdef CLI_USE_HISTORY
+static void cli_history_push(cli_t *cli, const char *line) {
+  if (strlen(line) == 0) {
+    return;
+  }
+  // Don't add if same as last
+  if (cli->history.count > 0) {
+    size_t last_idx = (cli->history.write_idx + CLI_HISTORY_NUM - 1) % CLI_HISTORY_NUM;
+    if (strcmp(cli->history.buf[last_idx], line) == 0) {
+      return;
+    }
+  }
+
+  strncpy(cli->history.buf[cli->history.write_idx], line, CLI_LINE_MAX - 1);
+  cli->history.buf[cli->history.write_idx][CLI_LINE_MAX - 1] = '\0';
+  cli->history.write_idx = (cli->history.write_idx + 1) % CLI_HISTORY_NUM;
+  if (cli->history.count < CLI_HISTORY_NUM) {
+    cli->history.count++;
+  }
+}
+
+static int cli_cmd_history(cli_t *cli, int argc, char **argv) {
+  if (argc == 2 && strcmp(argv[1], "clear") == 0) {
+    cli->history.count = 0;
+    cli->history.write_idx = 0;
+    cli->history.browse_idx = -1;
+    return 0;
+  }
+
+  if (argc > 1) {
+    return -1;
+  }
+
+  for (size_t i = 0; i < cli->history.count; i++) {
+    size_t idx = (cli->history.write_idx + CLI_HISTORY_NUM - cli->history.count + i) % CLI_HISTORY_NUM;
+    char num[24];
+    snprintf(num, sizeof(num), "%2zu ", i + 1);
+    cli->write(num, strlen(num));
+    cli->write(cli->history.buf[idx], strlen(cli->history.buf[idx]));
+    cli->write("\r\n", 2);
+  }
+  return 0;
+}
+#endif
 
 /**
  * @brief Traverse the commands list and callback the caller for every group and
@@ -369,10 +422,14 @@ static size_t cli_getline(cli_t *cli) {
       *cli->ptr = '\0';
       break;
     case '\e': // ESC
+#ifdef CLI_USE_HISTORY
+      cli->esc_state = 1;
+#else
       cli->write("\r\n", 2);
       cli->ptr = cli->line;
       *cli->ptr = '\0';
       cli_print_prompt(cli);
+#endif
       break;
     case '\b': // <-
     case 0x7f:
@@ -382,6 +439,57 @@ static size_t cli_getline(cli_t *cli) {
       }
       break;
     default:
+#ifdef CLI_USE_HISTORY
+      if (cli->esc_state == 1) {
+        if (ch == '[') {
+          cli->esc_state = 2;
+        } else {
+          cli->esc_state = 0;
+        }
+        break;
+      } else if (cli->esc_state == 2) {
+        cli->esc_state = 0;
+        if (ch == 'A' || ch == 'B') { // UP or DOWN
+          if (cli->history.count == 0) {
+            break;
+          }
+
+          if (ch == 'A') { // UP
+            if (cli->history.browse_idx == -1) {
+              cli->history.browse_idx = (int)cli->history.count - 1;
+            } else if (cli->history.browse_idx > 0) {
+              cli->history.browse_idx--;
+            }
+          } else { // DOWN
+            if (cli->history.browse_idx != -1) {
+              if (cli->history.browse_idx < (int)cli->history.count - 1) {
+                cli->history.browse_idx++;
+              } else {
+                cli->history.browse_idx = -1;
+              }
+            }
+          }
+
+          // Clear current line
+          while (cli->ptr > cli->line) {
+            cli_echo(cli, "\b \b", 3);
+            cli->ptr--;
+          }
+
+          if (cli->history.browse_idx != -1) {
+            size_t idx = (cli->history.write_idx + CLI_HISTORY_NUM - cli->history.count + (size_t)cli->history.browse_idx) % CLI_HISTORY_NUM;
+            strncpy(cli->line, cli->history.buf[idx], CLI_LINE_MAX - 1);
+            cli->line[CLI_LINE_MAX - 1] = '\0';
+            cli->ptr = cli->line + strlen(cli->line);
+            cli_echo(cli, cli->line, strlen(cli->line));
+          } else {
+            *cli->line = '\0';
+            cli->ptr = cli->line;
+          }
+        }
+        break;
+      }
+#endif
       if (isprint(ch)) {
         if (cli->ptr < (cli->line + sizeof(cli->line) - 1)) {
           *cli->ptr++ = ch; // Preserve original case
@@ -482,6 +590,9 @@ void cli_register_quit_callback(cli_t *cli, void (*cmd_quit_cb)(void)) {
 
 void cli_mainloop(cli_t *cli) {
   size_t len;
+#ifdef CLI_USE_HISTORY
+  char line_copy[CLI_LINE_MAX];
+#endif
 
   if (cli->lock) {
     cli->lock();
@@ -495,6 +606,12 @@ void cli_mainloop(cli_t *cli) {
     return;
   }
 
+#ifdef CLI_USE_HISTORY
+  strncpy(line_copy, cli->line, sizeof(line_copy) - 1);
+  line_copy[sizeof(line_copy) - 1] = '\0';
+  cli->history.browse_idx = -1;
+#endif
+
   if (cli_tokenize(cli) < 0) {
     cli->write(CLI_MSG_NUM_ARG_ERR, strlen(CLI_MSG_NUM_ARG_ERR));
     goto cli_mainloop_exit;
@@ -507,6 +624,9 @@ void cli_mainloop(cli_t *cli) {
   for (size_t i = 0; i < ARRAY_SIZE(cli_default_cmd_list); i++) {
 
     if (!strcasecmp(cli->argv[0], cli_default_cmd_list[i].name)) {
+#ifdef CLI_USE_HISTORY
+      cli_history_push(cli, line_copy);
+#endif
       if (cli_default_cmd_list[i].handler(cli, cli->argc, cli->argv) == 0) {
         cli->write(CLI_MSG_CMD_OK, strlen(CLI_MSG_CMD_OK));
       } else {
@@ -516,7 +636,11 @@ void cli_mainloop(cli_t *cli) {
     }
   }
 
-  if (!cli_cmd_list_traverser(cli, cli_cmd_run_traverser_cb)) {
+  if (cli_cmd_list_traverser(cli, cli_cmd_run_traverser_cb)) {
+#ifdef CLI_USE_HISTORY
+    cli_history_push(cli, line_copy);
+#endif
+  } else {
     cli->write(CLI_MSG_CMD_UNKNOWN, strlen(CLI_MSG_CMD_UNKNOWN));
   }
 cli_mainloop_exit:
@@ -536,6 +660,13 @@ void cli_init(cli_t *cli, const cli_cmd_list_t *cmd_list) {
 
   cli->lock = NULL;
   cli->unlock = NULL;
+
+#ifdef CLI_USE_HISTORY
+  cli->history.count = 0;
+  cli->history.write_idx = 0;
+  cli->history.browse_idx = -1;
+  cli->esc_state = 0;
+#endif
 
   cli->cmd_quit_cb = cli_cmd_quit_default_cb;
 

@@ -16,6 +16,15 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 
+cc_library(
+    name = "cli_history",
+    srcs = ["cli.c"],
+    hdrs = ["cli.h"],
+    deps = ["utils"],
+    defines = ["CLI_USE_HISTORY"],
+    visibility = ["//visibility:public"],
+)
+
 cc_test(
   name = "test_cmd_list",
   size = "small",
@@ -28,4 +37,11 @@ cc_test(
   size = "small",
   srcs = ["test_ringbuffer.cc"],
   deps = ["@googletest//:gtest_main", ":utils"]
+)
+
+cc_test(
+  name = "test_history",
+  size = "small",
+  srcs = ["test_history.cc"],
+  deps = ["@googletest//:gtest_main", ":cli_history"]
 )

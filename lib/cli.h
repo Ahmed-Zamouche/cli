@@ -58,6 +58,10 @@ extern "C" {
 #define CLI_ARGV_NUM (8) /**< Command arguments max  length*/
 #endif
 
+#ifndef CLI_HISTORY_NUM
+#define CLI_HISTORY_NUM (8) /**< Number of commands to keep in history */
+#endif
+
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
 #endif
@@ -117,6 +121,15 @@ struct cli_s {
   char *ptr;                  /**<  internal pointer*/
   char inbuf[CLI_IN_BUF_MAX]; /**<  buffer used for received bytes*/
   char line[CLI_LINE_MAX];    /**<  buffer used for line*/
+#ifdef CLI_USE_HISTORY
+  struct {
+    char buf[CLI_HISTORY_NUM][CLI_LINE_MAX];
+    size_t count;
+    size_t write_idx;
+    int browse_idx;
+  } history;
+  int esc_state;
+#endif
   int argc;                   /**<  number of arguments */
   char *argv[CLI_ARGV_NUM];   /**<  arguments vector*/
   ringbuffer_t rb_inbuf;      /**< ring buffer used received bytes see \link
