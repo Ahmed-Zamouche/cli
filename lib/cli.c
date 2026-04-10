@@ -378,6 +378,47 @@ void cli_print_prompt(cli_t *cli) {
   cli->flush();
 }
 
+#ifdef CLI_USE_HISTORY
+static void cli_history_navigate(cli_t *cli, bool up) {
+  if (cli->history.count == 0) {
+    return;
+  }
+
+  if (up) { // UP or CTRL-P
+    if (cli->history.browse_idx == -1) {
+      cli->history.browse_idx = (int)cli->history.count - 1;
+    } else if (cli->history.browse_idx > 0) {
+      cli->history.browse_idx--;
+    }
+  } else { // DOWN or CTRL-N
+    if (cli->history.browse_idx != -1) {
+      if (cli->history.browse_idx < (int)cli->history.count - 1) {
+        cli->history.browse_idx++;
+      } else {
+        cli->history.browse_idx = -1;
+      }
+    }
+  }
+
+  // Clear current line
+  while (cli->ptr > cli->line) {
+    cli_echo(cli, "\b \b", 3);
+    cli->ptr--;
+  }
+
+  if (cli->history.browse_idx != -1) {
+    size_t idx = (cli->history.write_idx + CLI_HISTORY_NUM - cli->history.count + (size_t)cli->history.browse_idx) % CLI_HISTORY_NUM;
+    strncpy(cli->line, cli->history.buf[idx], CLI_LINE_MAX - 1);
+    cli->line[CLI_LINE_MAX - 1] = '\0';
+    cli->ptr = cli->line + strlen(cli->line);
+    cli_echo(cli, cli->line, strlen(cli->line));
+  } else {
+    *cli->line = '\0';
+    cli->ptr = cli->line;
+  }
+}
+#endif
+
 /**
  * @brief read bytes from the receive buffer and add them to the line buffer.
  * Only printing character are added, If newline delimiter is found the the
@@ -421,6 +462,16 @@ static size_t cli_getline(cli_t *cli) {
       }
       *cli->ptr = '\0';
       break;
+    case 0x10: // CTRL-P
+#ifdef CLI_USE_HISTORY
+      cli_history_navigate(cli, true);
+#endif
+      break;
+    case 0x0E: // CTRL-N
+#ifdef CLI_USE_HISTORY
+      cli_history_navigate(cli, false);
+#endif
+      break;
     case '\e': // ESC
 #ifdef CLI_USE_HISTORY
       cli->esc_state = 1;
@@ -450,42 +501,7 @@ static size_t cli_getline(cli_t *cli) {
       } else if (cli->esc_state == 2) {
         cli->esc_state = 0;
         if (ch == 'A' || ch == 'B') { // UP or DOWN
-          if (cli->history.count == 0) {
-            break;
-          }
-
-          if (ch == 'A') { // UP
-            if (cli->history.browse_idx == -1) {
-              cli->history.browse_idx = (int)cli->history.count - 1;
-            } else if (cli->history.browse_idx > 0) {
-              cli->history.browse_idx--;
-            }
-          } else { // DOWN
-            if (cli->history.browse_idx != -1) {
-              if (cli->history.browse_idx < (int)cli->history.count - 1) {
-                cli->history.browse_idx++;
-              } else {
-                cli->history.browse_idx = -1;
-              }
-            }
-          }
-
-          // Clear current line
-          while (cli->ptr > cli->line) {
-            cli_echo(cli, "\b \b", 3);
-            cli->ptr--;
-          }
-
-          if (cli->history.browse_idx != -1) {
-            size_t idx = (cli->history.write_idx + CLI_HISTORY_NUM - cli->history.count + (size_t)cli->history.browse_idx) % CLI_HISTORY_NUM;
-            strncpy(cli->line, cli->history.buf[idx], CLI_LINE_MAX - 1);
-            cli->line[CLI_LINE_MAX - 1] = '\0';
-            cli->ptr = cli->line + strlen(cli->line);
-            cli_echo(cli, cli->line, strlen(cli->line));
-          } else {
-            *cli->line = '\0';
-            cli->ptr = cli->line;
-          }
+          cli_history_navigate(cli, ch == 'A');
         }
         break;
       }

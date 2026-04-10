@@ -176,3 +176,30 @@ TEST_F(CliHistoryTest, Navigation) {
     cli_mainloop(&cli);
     EXPECT_STREQ(cli.line, "");
 }
+
+TEST_F(CliHistoryTest, CtrlPAndCtrlN) {
+    cli_puts(&cli, "cmd1\n");
+    cli_mainloop(&cli);
+    cli_puts(&cli, "cmd2\n");
+    cli_mainloop(&cli);
+    
+    // Simulate CTRL-P (0x10)
+    cli_putchar(&cli, 0x10);
+    cli_mainloop(&cli);
+    EXPECT_STREQ(cli.line, "cmd2");
+    
+    // CTRL-P again
+    cli_putchar(&cli, 0x10);
+    cli_mainloop(&cli);
+    EXPECT_STREQ(cli.line, "cmd1");
+    
+    // Simulate CTRL-N (0x0E)
+    cli_putchar(&cli, 0x0E);
+    cli_mainloop(&cli);
+    EXPECT_STREQ(cli.line, "cmd2");
+
+    // CTRL-N again (back to empty)
+    cli_putchar(&cli, 0x0E);
+    cli_mainloop(&cli);
+    EXPECT_STREQ(cli.line, "");
+}
