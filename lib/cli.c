@@ -630,24 +630,19 @@ int cli_puts(cli_t *cli, const char *str) {
 // Embedded-friendly case-insensitive string comparison
 // Use this instead of strcasecmp() which may not be available
 static int cli_strcasecmp(const char *s1, const char *s2) {
-  while (*s1 && *s2) {
+  while (*s1 != '\0' && *s2 != '\0') {
     unsigned char c1 = (unsigned char)*s1;
     unsigned char c2 = (unsigned char)*s2;
-
-    if (tolower(c1) != tolower(c2)) {
-      return (int)tolower(c1) - (int)tolower(c2);
+    int diff = tolower(c1) - tolower(c2);
+    if (diff != 0) {
+      return diff;
     }
     s1++;
     s2++;
   }
-
-  // Check if both strings ended
-  if (*s1 == '\0' && *s2 == '\0') {
-    return 0;
-  }
-
-  // One string is longer
-  return (int)tolower((unsigned char)*s1) - (int)tolower((unsigned char)*s2);
+  
+  // Both must be at end to be equal
+  return tolower((unsigned char)*s1) - tolower((unsigned char)*s2);
 }
 
 static int cli_cmd_run_traverser_cb(cli_t *cli, const cli_cmd_group_t *group,
