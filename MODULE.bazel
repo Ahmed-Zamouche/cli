@@ -5,6 +5,7 @@ bazel_dep(name = "rules_python", version = "1.9.0")
 # to avoid the Bazel 9 "removed native rules" issue.
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+# GoogleTest (gtest) for C++ unit testing
 http_archive(
     name = "googletest",
     urls = ["https://github.com/google/googletest/archive/refs/tags/v1.17.0.tar.gz"],
@@ -13,9 +14,14 @@ http_archive(
 )
 
 # Hedron's Compile Commands Extractor for Bazel
-# Note: This version is incompatible with Bazel 9 due to use of native.py_binary
-http_archive(
-    name = "hedron_compile_commands",
-    urls = ["https://github.com/hedronvision/bazel-compile-commands-extractor/archive/0e990032f3c5a866e72615cf67e5ce22186dcb97.tar.gz"],
-    strip_prefix = "bazel-compile-commands-extractor-0e990032f3c5a866e72615cf67e5ce22186dcb97",
+# https://github.com/hedronvision/bazel-compile-commands-extractor
+bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
+git_override(
+    module_name = "hedron_compile_commands",
+    # remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
+    # hedronvision hasn't merged the fix for Bazel 9 yet, but we can point to the branch with the fix in the meantime.
+    remote = "https://github.com/xFile3160/bazel-compile-commands-extractor.git",
+    commit = "7fe1eab26d2b8eeb5e1c6a2f38bddb001e3f9696",
+    # Replace the commit hash (above) with the latest (https://github.com/hedronvision/bazel-compile-commands-extractor/commits/main).
+    # Even better, set up Renovate and let it do the work for you (see "Suggestion: Updates" in the README).
 )
