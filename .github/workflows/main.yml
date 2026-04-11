@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
     # Updated from v1 to v4
     - uses: actions/checkout@v4
@@ -21,17 +21,56 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-bazel-
 
-    - name: Install bazelisk
+    - name: Install Bazelisk
       run: |
         curl -LO "https://github.com/bazelbuild/bazelisk/releases/download/v1.19.0/bazelisk-linux-amd64"
         mkdir -p "${GITHUB_WORKSPACE}/bin/"
         mv bazelisk-linux-amd64 "${GITHUB_WORKSPACE}/bin/bazel"
         chmod +x "${GITHUB_WORKSPACE}/bin/bazel"
-    
+
     - name: Build
       run: |
         "${GITHUB_WORKSPACE}/bin/bazel" build //...
-        
-    - name: Test
+
+    # Removed the separate 'Test' step as 'bazel coverage' runs tests.
+    # Added coverage instrumentation, filtering, and check.
+    - name: Run Coverage
       run: |
-        "${GITHUB_WORKSPACE}/bin/bazel" test //...
+        # This command runs the tests with code coverage instrumentation.
+        # It also instruments the code and collects LCOV data.
+        # The --instrumentation_filter is added to ensure coverage is collected from src/ and example/.
+        "${GITHUB_WORKSPACE}/bin/bazel" coverage --instrumentation_filter="+//src,//example" //...
+
+    - name: Install lcov
+      run: sudo apt-get update && sudo apt-get install -y lcov
+
+    - name: Check Code Coverage
+      run: |
+        # Extract line coverage percentage from lcov summary
+        # Ensure lcov and bc are installed (lcov is installed in the workflow)
+        # The path to the report is based on Bazel's output.
+        COVERAGE_PERCENT=$(lcov --summary bazel-out/_coverage/_coverage_report.dat | grep "lines.*:" | awk '{print $2}' | sed 's/%//')
+
+        # Define the minimum coverage threshold (e.g., 80% as an industry standard)
+        MIN_COVERAGE=80
+
+        echo "Overall line coverage: $COVERAGE_PERCENT%"
+
+        # Compare coverage percentage with the threshold using bc for floating point comparison
+        if (( $(echo "$COVERAGE_PERCENT < $MIN_COVERAGE" | bc -l) )); then
+          echo "::error::Code coverage is below the required threshold of ${MIN_COVERAGE}%."
+          exit 1
+        else
+          echo "Code coverage is sufficient (${COVERAGE_PERCENT}% >= ${MIN_COVERAGE}%)."
+        fi
+
+    - name: Generate HTML Coverage Report
+      run: |
+        # Use genhtml to create an HTML report from the LCOV data.
+        genhtml -o coverage_report --branch --show-details bazel-out/_coverage/_coverage_report.dat
+
+    - name: Upload Coverage Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: coverage_report/

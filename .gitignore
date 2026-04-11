@@ -13,3 +13,4 @@ project-cppcheck-*/
 # Ignore the directory in which `clangd` stores its local index.
 /.cache/
 .aider*
+coverage_report/
