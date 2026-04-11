@@ -41,6 +41,7 @@ jobs:
 
     - name: Run Cppcheck
       run: |
+        mkdir -p .cppcheck_analysis
         cppcheck --project=compile_commands.json $(grep -vE '^#|^\[|^$' cppcheck.args)
 
 
