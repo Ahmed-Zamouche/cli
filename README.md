@@ -260,6 +260,37 @@ bazel test //lib:test_cmd_list
 bazel test //lib:test_history --test_output=all
 ```
 
+## Coverage Reporting
+
+This project includes coverage reporting capabilities. You can generate a local HTML coverage report using `lcov` and `genhtml` after running Bazel's coverage command.
+
+### Generating Coverage Locally
+
+1.  **Run Bazel Coverage:**
+    Execute the following command in your project's root directory. This will run the tests and collect coverage data.
+    ```bash
+    bazel coverage //...
+    ```
+    *(Note: The `--config=coverage` flag may be required if your Bazel configuration expects it. If coverage data is not generated, check your `.bazelrc` or Bazel documentation for specific C++ coverage flags.)*
+
+2.  **Install lcov:**
+    Ensure you have `lcov` installed on your local machine. On Debian/Ubuntu-based systems, you can install it using:
+    ```bash
+    sudo apt-get update && sudo apt-get install -y lcov
+    ```
+
+3.  **Generate HTML Report:**
+    Bazel typically places LCOV data files within the `bazel-out/_coverage/` directory. Use `genhtml` to convert this data into a browsable HTML report.
+    ```bash
+    # Navigate to your project root (where Bazel output is typically relative)
+    # Then run genhtml:
+    genhtml -o coverage_report --branch --show-details bazel-out/_coverage/_coverage_report.dat
+    ```
+    This command creates an HTML report in the `coverage_report` directory.
+
+4.  **View Report:**
+    Open the `coverage_report/index.html` file in your web browser to explore the code coverage.
+
 ## Contributing
 
 1. Fork the repository
