@@ -39,7 +39,7 @@ jobs:
         # This command runs the tests with code coverage instrumentation.
         # It also instruments the code and collects LCOV data.
         # The --instrumentation_filter is added to ensure coverage is collected from src/ and example/.
-        "${GITHUB_WORKSPACE}/bin/bazel" coverage --instrumentation_filter="+//src,//example" //...
+        "${GITHUB_WORKSPACE}/bin/bazel" coverage --instrumentation_filter="+//lib,//example" //...
 
     - name: Install lcov
       run: sudo apt-get update && sudo apt-get install -y lcov
