@@ -28,9 +28,21 @@ jobs:
         mv bazelisk-linux-amd64 "${GITHUB_WORKSPACE}/bin/bazel"
         chmod +x "${GITHUB_WORKSPACE}/bin/bazel"
 
+    - name: Install cppcheck
+      run: sudo apt-get update && sudo apt-get install -y cppcheck
+
     - name: Build
       run: |
         "${GITHUB_WORKSPACE}/bin/bazel" build //...
+
+    - name: Generate compile_commands.json
+      run: |
+        "${GITHUB_WORKSPACE}/bin/bazel" run //:refresh_compile_commands
+
+    - name: Run Cppcheck
+      run: |
+        cppcheck --project=compile_commands.json $(grep -vE '^#|^\[|^$' cppcheck.args)
+
 
     # Removed the separate 'Test' step as 'bazel coverage' runs tests.
     # Added coverage instrumentation, filtering, and check.

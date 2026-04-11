@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     lcov \
     python3 \
     git \
+    cppcheck \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl -LO "https://github.com/bazelbuild/bazelisk/releases/download/v1.28.1/bazelisk-linux-amd64"
